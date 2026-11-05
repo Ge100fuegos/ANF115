@@ -1,0 +1,591 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadora UCP - Puntos de Casos de Uso{% endblock %}
+
+{% block content %}
+<style>
+    /*Esto permite ocultar todas las secciones y mostrar solo las activas.*/
+    .section {
+        display: none;
+    }
+
+    .section.active {
+        display: block;
+    }
+    .bg-pepe{
+        background-color: #050B31;
+        color: #ffffff;              /* text-white */
+        text-align: center;          /* text-center */
+        border-radius: 0.25rem;      /* rounded */
+        margin-bottom: 1.5rem;       /* mb-4 */
+        padding: 1.5rem;             /* p-4 */
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15); /* shadow */
+        border-radius: 10px;
+    }
+</style>
+
+<div class="container">
+    <header class="bg-pepe">
+        <h1 class="display-4 fw-bold">Calculadora de Puntos de Casos de Uso (UCP)</h1>
+        <p class="lead">Estimación de esfuerzo para proyectos de software basada en el método de Puntos de Casos de Uso</p>
+    </header>
+    
+    <div class="section card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">1. Actores (UAW - Unadjusted Actor Weight)</h2>
+            <p class="card-text">Clasifique los actores del sistema según su complejidad:</p>
+            
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tipo de Actor</th>
+                        <th>Descripción</th>
+                        <th>Peso</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Simple</strong></td>
+                        <td>Sistemas externos que se comunican mediante API (Ej: Sistema de Pagos)</td>
+                        <td>1</td>
+                        <td><input type="number" id="actor-simple" min="0" value="0" class="form-control w-auto"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medio</strong></td>
+                        <td>Interactúan mediante protocolos específicos (Ej: ERP, Sistema Legacy)</td>
+                        <td>2</td>
+                        <td><input type="number" id="actor-medium" min="0" value="0" class="form-control w-auto"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Complejo</strong></td>
+                        <td>Interfaz gráfica completa (UI/UX) (Ej: Usuario Final, Administrador)</td>
+                        <td>3</td>
+                        <td><input type="number" id="actor-complex" min="0" value="0" class="form-control w-auto"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="alert alert-secondary text-center">
+                <div class="fw-bold">UAW (Unadjusted Actor Weight)</div>
+                <div class="h3 text-primary" id="uaw-result">0</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">2. Casos de Uso (UUCW - Unadjusted Use Case Weight)</h2>
+            <p class="card-text">Clasifique los casos de uso según su complejidad (por transacciones o clases de análisis):</p>
+            
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Complejidad</th>
+                        <th>Descripción</th>
+                        <th>Peso</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Simple</strong></td>
+                        <td>1-3 transacciones o 1-5 clases de análisis (Ej: Consultar Saldo)</td>
+                        <td>5</td>
+                        <td><input type="number" id="uc-simple" min="0" value="0" class="form-control w-auto"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medio</strong></td>
+                        <td>4-7 transacciones o 6-10 clases (Ej: Realizar Transferencia)</td>
+                        <td>10</td>
+                        <td><input type="number" id="uc-medium" min="0" value="0" class="form-control w-auto"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Complejo</strong></td>
+                        <td>>7 transacciones o >10 clases (Ej: Solicitar Préstamo)</td>
+                        <td>15</td>
+                        <td><input type="number" id="uc-complex" min="0" value="0" class="form-control w-auto"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="alert alert-secondary text-center">
+                <div class="fw-bold">UUCW (Unadjusted Use Case Weight)</div>
+                <div class="h3 text-primary" id="uucw-result">0</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">3. Factores Técnicos (TCF - Technical Complexity Factor)</h2>
+            <p class="card-text">Evalúe cada factor técnico del proyecto (0 = irrelevante, 5 = impacto fuerte):</p>
+            
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Factor</th>
+                        <th>Descripción</th>
+                        <th>Peso</th>
+                        <th>Valor (0-5)</th>
+                    </tr>
+                </thead>
+                <tbody id="technical-factors-table">
+                    <!-- Los factores técnicos se generarán con JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="alert alert-secondary text-center">
+                <div class="fw-bold">TCF (Technical Complexity Factor)</div>
+                <div class="h3 text-primary" id="tcf-result">0.60</div>
+                <div id="tcf-interpretation" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">4. Factores Ambientales (EF - Environmental Factor)</h2>
+            <p class="card-text">Evalúe cada factor ambiental del equipo de desarrollo (0 = bajo, 5 = alto):</p>
+            
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Factor</th>
+                        <th>Descripción</th>
+                        <th>Peso</th>
+                        <th>Valor (0-5)</th>
+                    </tr>
+                </thead>
+                <tbody id="environmental-factors-table">
+                    <!-- Los factores ambientales se generarán con JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="alert alert-secondary text-center">
+                <div class="fw-bold">EF (Environmental Factor)</div>
+                <div class="h3 text-primary" id="ef-result">1.40</div>
+                <div id="ef-interpretation" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">5. Cálculo de Horas-Persona (CF)</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Factor</th>
+                                <th>Filtro</th>
+                                <th>Condición</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>E1 a E6</td>
+                                <td>Factor < 3</td>
+                                <td>Cuentan si son menores a 3</td>
+                            </tr>
+                            <tr>
+                                <td>E7 a E8</td>
+                                <td>Factor > 3</td>
+                                <td>Cuentan si son mayores a 3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Suma de Factores</th>
+                                <th>CF (Horas por UCP)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>≤ 2</td>
+                                <td>20 horas</td>
+                            </tr>
+                            <tr>
+                                <td>3 - 4</td>
+                                <td>28 horas</td>
+                            </tr>
+                            <tr>
+                                <td>≥ 5</td>
+                                <td>36 horas</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="alert alert-secondary">
+                <h5 class="alert-heading">Cálculo Detallado del CF:</h5>
+                <div class="mb-1">Factores E1-E6 < 3: <span id="ef-low-count">0</span> factores</div>
+                <div class="mb-1">Factores E7-E8 > 3: <span id="ef-high-count">0</span> factores</div>
+                <div>Suma Total: <span id="ef-sum">0</span></div>
+            </div>
+            
+            <div class="alert alert-secondary">
+                <div class="fw-bold">CF Calculado Automáticamente: <span id="auto-cf-value">20</span> horas por UCP</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">6. Cálculo Final y Esfuerzo Estimado</h2>
+            
+            <div class="alert alert-secondary text-center mb-3">
+                <div class="fw-bold">UUCP (Unadjusted Use Case Points)</div>
+                <div class="h3 text-primary" id="uucp-result">0</div>
+            </div>
+            
+            <div class="alert alert-secondary text-center mb-3">
+                <div class="fw-bold">UCP (Use Case Points)</div>
+                <div class="h3 text-primary" id="ucp-result">0</div>
+            </div>
+            
+            <div class="alert alert-secondary text-center mb-3">
+                <div class="fw-bold">Esfuerzo Estimado (horas)</div>
+                <div class="h3 text-primary" id="effort-result">0</div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label for="team-size" class="form-label">Tamaño del equipo:</label>
+                    <input type="number" id="team-size" min="1" max="10" value="2" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label for="hours-per-day" class="form-label">Horas productivas por día por desarrollador:</label>
+                    <input type="number" id="hours-per-day" min="4" max="8" value="6" step="0.5" class="form-control">
+                </div>
+            </div>
+            
+            <div class="alert alert-secondary text-center mb-3">
+                <div class="fw-bold">Duración Estimada (días calendario)</div>
+                <div class="h3 text-primary" id="duration-result">0</div>
+            </div>
+            
+            <div class="alert alert-success">
+                <h5 class="alert-heading">Interpretación de Resultados</h5>
+                <p id="duration-interpretation"></p>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-dark btn-lg fw-bold me-2" id="calculate-btn">Calcular Estimación</button>
+                <button class="btn btn-warning btn-lg fw-bold" id="reset-btn">Reiniciar Valores</button>
+            </div>
+        </div>
+    </div>
+    <!--
+    <footer class="text-center text-muted mt-5 py-3">
+        <p>Calculadora UCP - Método de Puntos de Casos de Uso para estimación de proyectos de software</p>
+        <p>Basado en la metodología de Gustav Karner</p>
+    </footer>
+    -->
+</div>
+{% endblock %}
+
+{% block footer_scripts %}
+<script>
+    // Datos de factores técnicos
+    const technicalFactors = [
+        { id: 'T1', name: 'Sistema Distribuido', description: '¿Requiere arquitectura distribuida?', weight: 2 },
+        { id: 'T2', name: 'Objetivos de Performance', description: '¿Requiere alto rendimiento/tiempo real?', weight: 1 },
+        { id: 'T3', name: 'Eficiencia del Usuario Final', description: '¿Cuánto impacto en la productividad del usuario?', weight: 1 },
+        { id: 'T4', name: 'Complejidad de Procesamiento Interno', description: '¿Algoritmos/complejidad computacional?', weight: 1 },
+        { id: 'T5', name: 'Código Reutilizable', description: '¿Se puede reutilizar código existente?', weight: 1 },
+        { id: 'T6', name: 'Facilidad de Instalación', description: '¿Complejidad del despliegue?', weight: 0.5 },
+        { id: 'T7', name: 'Facilidad de Uso', description: '¿Interfaz amigable?', weight: 0.5 },
+        { id: 'T8', name: 'Portabilidad', description: '¿Debe ejecutarse en múltiples plataformas?', weight: 2 },
+        { id: 'T9', name: 'Facilidad de Cambio', description: '¿Frecuencia de modificaciones?', weight: 1 },
+        { id: 'T10', name: 'Concurrencia', description: '¿Múltiples usuarios simultáneos?', weight: 1 },
+        { id: 'T11', name: 'Características de Seguridad', description: '¿Nivel de seguridad requerido?', weight: 1 },
+        { id: 'T12', name: 'Acceso a Datos de Terceros', description: '¿Integración con sistemas externos?', weight: 1 },
+        { id: 'T13', name: 'Facilidad de Entrenamiento', description: '¿Es fácil de aprender?', weight: 1 }
+    ];
+
+    // Datos de factores ambientales
+    const environmentalFactors = [
+        { id: 'E1', name: 'Familiaridad con el Proyecto', description: 'Conocimiento del dominio, negocio y tecnología', weight: 1.5 },
+        { id: 'E2', name: 'Experiencia en Aplicaciones Similares', description: 'Experiencia técnica en tecnologías y arquitecturas similares', weight: 0.5 },
+        { id: 'E3', name: 'Experiencia en Orientación a Objetos', description: 'Habilidad en principios OOP y patrones de diseño', weight: 1 },
+        { id: 'E4', name: 'Capacidad del Analista Líder', description: 'Habilidades de análisis, comunicación y liderazgo', weight: 0.5 },
+        { id: 'E5', name: 'Motivación del Equipo', description: 'Nivel de compromiso, entusiasmo y ownership', weight: 1 },
+        { id: 'E6', name: 'Estabilidad de Requisitos', description: 'Grado en que los requisitos están definidos y son estables', weight: 2 },
+        { id: 'E7', name: 'Personal Part-Time', description: 'Porcentaje de equipo que trabaja part-time', weight: -1 },
+        { id: 'E8', name: 'Dificultad del Lenguaje de Programación', description: 'Complejidad del lenguaje y herramientas', weight: -1 }
+    ];
+
+    // Generar factores técnicos en la tabla
+    const technicalFactorsTable = document.getElementById('technical-factors-table');
+    technicalFactors.forEach(factor => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${factor.id}</strong>: ${factor.name}</td>
+            <td>${factor.description}</td>
+            <td>${factor.weight}</td>
+            <td>
+                <select id="${factor.id}" class="form-select">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </td>
+        `;
+        technicalFactorsTable.appendChild(row);
+        
+        // Agregar evento al combobox
+        const select = document.getElementById(factor.id);
+        select.addEventListener('change', function() {
+            calculateTCF();
+            calculateEstimation();
+        });
+    });
+
+    // Generar factores ambientales en la tabla
+    const environmentalFactorsTable = document.getElementById('environmental-factors-table');
+    environmentalFactors.forEach(factor => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${factor.id}</strong>: ${factor.name}</td>
+            <td>${factor.description}</td>
+            <td>${factor.weight}</td>
+            <td>
+                <select id="${factor.id}" class="form-select">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </td>
+        `;
+        environmentalFactorsTable.appendChild(row);
+        
+        // Agregar evento al combobox
+        const select = document.getElementById(factor.id);
+        select.addEventListener('change', function() {
+            calculateEF();
+            calculateEstimation();
+        });
+    });
+
+    // Calcular UAW
+    function calculateUAW() {
+        const simple = parseInt(document.getElementById('actor-simple').value) || 0;
+        const medium = parseInt(document.getElementById('actor-medium').value) || 0;
+        const complex = parseInt(document.getElementById('actor-complex').value) || 0;
+        
+        const uaw = (simple * 1) + (medium * 2) + (complex * 3);
+        document.getElementById('uaw-result').textContent = uaw;
+        return uaw;
+    }
+
+    // Calcular UUCW
+    function calculateUUCW() {
+        const simple = parseInt(document.getElementById('uc-simple').value) || 0;
+        const medium = parseInt(document.getElementById('uc-medium').value) || 0;
+        const complex = parseInt(document.getElementById('uc-complex').value) || 0;
+        
+        const uucw = (simple * 5) + (medium * 10) + (complex * 15);
+        document.getElementById('uucw-result').textContent = uucw;
+        return uucw;
+    }
+
+    // Calcular TCF
+    function calculateTCF() {
+        let tFactor = 0;
+        
+        technicalFactors.forEach(factor => {
+            const value = parseInt(document.getElementById(factor.id).value) || 0;
+            tFactor += value * factor.weight;
+        });
+        
+        const tcf = 0.6 + (0.01 * tFactor);
+        document.getElementById('tcf-result').textContent = tcf.toFixed(2);
+        
+        // Interpretación del TCF
+        let interpretation = '';
+        if (tcf < 0.85) {
+            interpretation = 'Ambiente técnico MUY FAVORABLE';
+        } else if (tcf <= 1.15) {
+            interpretation = 'Ambiente técnico NEUTRAL';
+        } else {
+            interpretation = 'Ambiente técnico DESFAVORABLE/COMPLEJO';
+        }
+        document.getElementById('tcf-interpretation').textContent = interpretation;
+        
+        return tcf;
+    }
+
+    // Calcular EF y CF automático
+    function calculateEF() {
+        let eFactor = 0;
+        let efSum = 0;
+        let efLowCount = 0; // E1-E6 < 3
+        let efHighCount = 0; // E7-E8 > 3
+        
+        environmentalFactors.forEach((factor, index) => {
+            const value = parseInt(document.getElementById(factor.id).value) || 0;
+            eFactor += value * factor.weight;
+            
+            // Calcular para CF
+            if (index < 6) { // E1 a E6
+                if (value < 3) {
+                    efLowCount++;
+                    efSum += value;
+                }
+            } else { // E7 a E8
+                if (value > 3) {
+                    efHighCount++;
+                    efSum += value;
+                }
+            }
+        });
+        
+        const ef = 1.4 + (-0.03 * eFactor);
+        document.getElementById('ef-result').textContent = ef.toFixed(2);
+        
+        // Mostrar detalles del cálculo del CF
+        document.getElementById('ef-low-count').textContent = efLowCount;
+        document.getElementById('ef-high-count').textContent = efHighCount;
+        document.getElementById('ef-sum').textContent = efSum;
+        
+        // Calcular CF automático basado en la suma
+        let autoCF;
+        if (efSum <= 2) {
+            autoCF = 20;
+        } else if (efSum <= 4) {
+            autoCF = 28;
+        } else {
+            autoCF = 36;
+        }
+        document.getElementById('auto-cf-value').textContent = autoCF;
+        
+        // Interpretación del EF
+        let interpretation = '';
+        if (ef > 1.10) {
+            interpretation = 'Ambiente ALTAMENTE FAVORABLE (equipo experto, estable)';
+        } else if (ef >= 0.90) {
+            interpretation = 'Ambiente NEUTRAL';
+        } else {
+            interpretation = 'Ambiente DESFAVORABLE (equipo inexperto, condiciones pobres)';
+        }
+        document.getElementById('ef-interpretation').textContent = interpretation;
+        
+        return {ef, autoCF};
+    }
+
+    // Calcular estimación completa
+    function calculateEstimation() {
+        const uaw = calculateUAW();
+        const uucw = calculateUUCW();
+        const tcf = calculateTCF();
+        const {ef, autoCF} = calculateEF();
+        
+        const uucp = uaw + uucw;
+        const ucp = uucp * tcf * ef;
+        
+        document.getElementById('uucp-result').textContent = uucp.toFixed(2);
+        document.getElementById('ucp-result').textContent = ucp.toFixed(2);
+        
+        const effort = ucp * autoCF;
+        document.getElementById('effort-result').textContent = Math.round(effort);
+        
+        const teamSize = parseInt(document.getElementById('team-size').value) || 2;
+        const hoursPerDay = parseFloat(document.getElementById('hours-per-day').value) || 6;
+        const duration = effort / (teamSize * hoursPerDay);
+        document.getElementById('duration-result').textContent = Math.round(duration);
+        
+        // Interpretación de la duración
+        let interpretation = '';
+        const weeks = Math.ceil(duration / 5); // Asumiendo 5 días laborales por semana
+        if (teamSize === 1) {
+            interpretation = `Un desarrollador tardaría aproximadamente ${weeks} semanas (${Math.round(duration)} días) en completar el proyecto.`;
+        } else {
+            interpretation = `${teamSize} desarrolladores tardarían aproximadamente ${weeks} semanas (${Math.round(duration)} días) en completar el proyecto.`;
+        }
+        document.getElementById('duration-interpretation').textContent = interpretation;
+    }
+
+    // Reiniciar valores
+    function resetValues() {
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            if (input.id !== 'team-size' && input.id !== 'hours-per-day') {
+                input.value = 0;
+            }
+        });
+        
+        document.querySelectorAll('select').forEach(select => {
+            select.value = '0';
+        });
+        
+        calculateEstimation();
+    }
+
+    // Event Listeners para inputs numéricos
+    document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('input', calculateEstimation);
+    });
+
+    // Event Listeners para botones
+    document.getElementById('calculate-btn').addEventListener('click', calculateEstimation);
+    document.getElementById('reset-btn').addEventListener('click', resetValues);
+
+    // Calcular inicialmente
+    calculateEstimation();
+
+    // ---- CONTROL DE VISIBILIDAD DE SECCIONES ---- //
+    const sections = document.querySelectorAll('.section');
+    sections.forEach((sec, i) => {
+        if (i === 0) sec.classList.add('active'); // solo la primera visible al inicio
+    });
+
+    function checkSectionProgress() {
+        // 1️⃣ Sección 1 - Actores
+        const a1 = parseInt(document.getElementById('actor-simple').value) || 0;
+        const a2 = parseInt(document.getElementById('actor-medium').value) || 0;
+        const a3 = parseInt(document.getElementById('actor-complex').value) || 0;
+        if (a1 + a2 + a3 > 0) sections[1].classList.add('active'); // mostrar sección 2
+
+        // 2️⃣ Sección 2 - Casos de uso
+        const uc1 = parseInt(document.getElementById('uc-simple').value) || 0;
+        const uc2 = parseInt(document.getElementById('uc-medium').value) || 0;
+        const uc3 = parseInt(document.getElementById('uc-complex').value) || 0;
+        if (uc1 + uc2 + uc3 > 0) sections[2].classList.add('active'); // mostrar TCF
+
+        // 3️⃣ Sección 3 - Factores técnicos
+        const someTechnicalSelected = Array.from(document.querySelectorAll('#technical-factors-table select'))
+            .some(sel => parseInt(sel.value) > 0);
+        if (someTechnicalSelected) sections[3].classList.add('active'); // mostrar EF
+
+        // 4️⃣ Sección 4 - Factores ambientales
+        const someEnvironmentalSelected = Array.from(document.querySelectorAll('#environmental-factors-table select'))
+            .some(sel => parseInt(sel.value) > 0);
+        if (someEnvironmentalSelected) sections[4].classList.add('active'); // mostrar CF
+
+        // 5️⃣ Sección 5 - CF
+        if (document.getElementById('ef-sum').textContent !== '0') {
+            sections[5].classList.add('active'); // mostrar cálculo final
+        }
+    }
+
+    // Vincular con cambios de input
+    document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', checkSectionProgress);
+        el.addEventListener('change', checkSectionProgress);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,767 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadora de Costeo de Materiales{% endblock %}
+
+{% block content %}
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .modal-title {
+        font-size: 1.5rem;
+        color: var(--primary);
+    }
+    
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--dark);
+    }
+    
+    .allocation-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .allocation-options {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .percentage-input {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .departments-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    
+    .department-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .department-item:last-child {
+        border-bottom: none;
+    }
+    
+    .department-name {
+        flex: 1;
+    }
+    
+    .bg-pepe{
+        background-color: #050B31;
+        color: #ffffff;
+        text-align: center;
+        border-radius: 0.25rem;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+        border-radius: 10px;
+    }
+</style>
+
+<header class="bg-pepe">
+    <h1 class="display-4 fw-bold">Calculadora de Costos Indirectos de Fabricación (CIF)</h1>
+    <p class="lead">Distribución de costos indirectos entre departamentos de producción y apoyo</p>
+</header>
+
+<div class="section card mb-4 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title h4 border-bottom pb-2 mb-3">1. Balance de Comprobación - Costos Indirectos</h2>
+        
+        <div class="row mb-4">
+            <div class="col-md-5">
+                <label for="account-name" class="form-label">Nombre de Cuenta:</label>
+                <input type="text" id="account-name" class="form-control" placeholder="Ej: Materiales Indirectos">
+            </div>
+            <div class="col-md-3">
+                <label for="account-balance" class="form-label">Saldo ($):</label>
+                <input type="number" id="account-balance" class="form-control" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-dark w-100" id="add-account-btn">Agregar Cuenta</button>
+            </div>
+        </div>
+        
+        <table class="table table-striped table-hover" id="accounts-table">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nombre de Cuenta</th>
+                    <th>Saldo ($)</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="accounts-list">
+            </tbody>
+            <tfoot>
+                <tr class="table-primary fw-bold">
+                    <td>Total Costos Indirectos</td>
+                    <td id="total-accounts">$0.00</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="section card mb-4 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title h4 border-bottom pb-2 mb-3">2. Información de Departamentos</h2>
+        
+        <div class="table-responsive">
+            <table class="table table-hover" id="departments-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Departamentos</th>
+                        <th>Área Planta (m²)</th>
+                        <th>Empleados</th>
+                        <th>Horas MO</th>
+                        <th>Salarios ($)</th>
+                        <th>Horas Máquina</th>
+                        <th>Costo Máq. Equipo ($)</th>
+                    </tr>
+                </thead>
+                <tbody id="departments-list">
+                    <tr class="table-active">
+                        <td>Unidad de Planificación y Estrategia</td>
+                        <td><input type="number" class="form-control department-area" data-department="planificacion" value="40"></td>
+                        <td><input type="number" class="form-control department-employees" data-department="planificacion" value="4"></td>
+                        <td><input type="number" class="form-control department-hours-mo" data-department="planificacion" value="7436"></td>
+                        <td><input type="number" class="form-control department-salaries" data-department="planificacion" value="91200"></td>
+                        <td><input type="number" class="form-control department-hours-machine" data-department="planificacion" value="5720"></td>
+                        <td><input type="number" class="form-control department-cost-machine" data-department="planificacion" value="12000"></td>
+                    </tr>
+                    <tr class="table-active">
+                        <td>Unidad de Desarrollo de Software</td>
+                        <td><input type="number" class="form-control department-area" data-department="desarrollo" value="160"></td>
+                        <td><input type="number" class="form-control department-employees" data-department="desarrollo" value="16"></td>
+                        <td><input type="number" class="form-control department-hours-mo" data-department="desarrollo" value="29744"></td>
+                        <td><input type="number" class="form-control department-salaries" data-department="desarrollo" value="314400"></td>
+                        <td><input type="number" class="form-control department-hours-machine" data-department="desarrollo" value="22880"></td>
+                        <td><input type="number" class="form-control department-cost-machine" data-department="desarrollo" value="48000"></td>
+                    </tr>
+                    <tr class="table-light">
+                        <td>Unidad Financiera y Contable</td>
+                        <td><input type="number" class="form-control department-area" data-department="financiera" value="30"></td>
+                        <td><input type="number" class="form-control department-employees" data-department="financiera" value="3"></td>
+                        <td><input type="number" class="form-control department-hours-mo" data-department="financiera" value="5577"></td>
+                        <td><input type="number" class="form-control department-salaries" data-department="financiera" value="55200"></td>
+                        <td><input type="number" class="form-control department-hours-machine" data-department="financiera" value="4290"></td>
+                        <td><input type="number" class="form-control department-cost-machine" data-department="financiera" value="3000"></td>
+                    </tr>
+                    <tr class="table-light">
+                        <td>Gerencia General</td>
+                        <td><input type="number" class="form-control department-area" data-department="gerencia" value="20"></td>
+                        <td><input type="number" class="form-control department-employees" data-department="gerencia" value="2"></td>
+                        <td><input type="number" class="form-control department-hours-mo" data-department="gerencia" value="3718"></td>
+                        <td><input type="number" class="form-control department-salaries" data-department="gerencia" value="40800"></td>
+                        <td><input type="number" class="form-control department-hours-machine" data-department="gerencia" value="2860"></td>
+                        <td><input type="number" class="form-control department-cost-machine" data-department="gerencia" value="2000"></td>
+                    </tr>
+                    <tr class="table-light">
+                        <td>Unidad de Venta</td>
+                        <td><input type="number" class="form-control department-area" data-department="ventas" value="30"></td>
+                        <td><input type="number" class="form-control department-employees" data-department="ventas" value="3"></td>
+                        <td><input type="number" class="form-control department-hours-mo" data-department="ventas" value="5577"></td>
+                        <td><input type="number" class="form-control department-salaries" data-department="ventas" value="62400"></td>
+                        <td><input type="number" class="form-control department-hours-machine" data-department="ventas" value="4290"></td>
+                        <td><input type="number" class="form-control department-cost-machine" data-department="ventas" value="3000"></td>
+                    </tr>
+                    <tr class="table-light">
+                        <td>Unidad de Soporte Técnico</td>
+                        <td><input type="number" class="form-control department-area" data-department="soporte" value="30"></td>
+                        <td><input type="number" class="form-control department-employees" data-department="soporte" value="3"></td>
+                        <td><input type="number" class="form-control department-hours-mo" data-department="soporte" value="5577"></td>
+                        <td><input type="number" class="form-control department-salaries" data-department="soporte" value="28800"></td>
+                        <td><input type="number" class="form-control department-hours-machine" data-department="soporte" value="4290"></td>
+                        <td><input type="number" class="form-control department-cost-machine" data-department="soporte" value="3000"></td>
+                    </tr>
+                    <tr class="table-light">
+                        <td>Recursos Humanos</td>
+                        <td><input type="number" class="form-control department-area" data-department="rh" value="10"></td>
+                        <td><input type="number" class="form-control department-employees" data-department="rh" value="1"></td>
+                        <td><input type="number" class="form-control department-hours-mo" data-department="rh" value="1859"></td>
+                        <td><input type="number" class="form-control department-salaries" data-department="rh" value="19200"></td>
+                        <td><input type="number" class="form-control department-hours-machine" data-department="rh" value="1430"></td>
+                        <td><input type="number" class="form-control department-cost-machine" data-department="rh" value="1000"></td>
+                    </tr>
+                    <tr class="table-light">
+                        <td>Unidad de Servicios Generales</td>
+                        <td><input type="number" class="form-control department-area" data-department="servicios" value="20"></td>
+                        <td><input type="number" class="form-control department-employees" data-department="servicios" value="2"></td>
+                        <td><input type="number" class="form-control department-hours-mo" data-department="servicios" value="3718"></td>
+                        <td><input type="number" class="form-control department-salaries" data-department="servicios" value="19200"></td>
+                        <td><input type="number" class="form-control department-hours-machine" data-department="servicios" value="0"></td>
+                        <td><input type="number" class="form-control department-cost-machine" data-department="servicios" value="0"></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="table-success fw-bold">
+                        <td>Totales</td>
+                        <td id="total-area">0</td>
+                        <td id="total-employees">0</td>
+                        <td id="total-hours-mo">0</td>
+                        <td id="total-salaries">$0.00</td>
+                        <td id="total-hours-machine">0</td>
+                        <td id="total-cost-machine">$0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="text-center mt-4">
+            <button class="btn btn-dark" id="calculate-totals-btn">Calcular Totales</button>
+        </div>
+    </div>
+</div>
+
+<div class="section card mb-4 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title h4 border-bottom pb-2 mb-3">3. Distribución de Costos Indirectos</h2>
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="allocation-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Cuenta de Costo</th>
+                        <th>Saldo Total</th>
+                    </tr>
+                </thead>
+                <tbody id="allocation-list">
+                </tbody>
+                <tfoot>
+                    <tr class="table-success fw-bold">
+                        <td>Total Asignado por Departamento</td>
+                        <td id="total-allocated">$0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <div class="text-center mt-4">
+            <button class="btn btn-success me-2" id="calculate-allocation-btn">Calcular Distribución</button>
+            <button class="btn btn-warning me-2" id="clear-all-btn">Limpiar Todo</button>
+            <button class="btn btn-info" id="restore-defaults-btn">Restaurar Valores Predeterminados</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="allocation-modal" tabindex="-1" aria-labelledby="allocationModalLabel" aria-hidden="true">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Configurar Distribución de Costos</h3>
+            <button class="btn-close" id="close-modal">&times;</button>
+        </div>
+        
+        <div class="allocation-form">
+            <div class="form-group">
+                <label for="allocation-account" class="form-label">Cuenta de Costo:</label>
+                <select class="form-select" id="allocation-account">
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="allocation-percentage">Porcentaje a Distribuir (%):</label>
+                <input class="form-control" type="number" id="allocation-percentage" min="0" max="100" value="100">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="allocation-base">Base de Distribución:</label>
+                <select class="form-select" id="allocation-base">
+                    <option value="area">Área de Planta (m²)</option>
+                    <option value="employees">Número de Empleados</option>
+                    <option value="hoursMO">Horas de Mano de Obra</option>
+                    <option value="salaries">Salarios</option>
+                    <option value="hoursMachine">Horas Máquina</option>
+                    <option value="costMachine">Costo de Maquinaria y Equipo</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Departamentos para Distribución:</label>
+                <div class="departments-list" id="departments-selection">
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-dark" id="save-allocation-btn">Guardar Configuración</button>
+            <button class="btn btn-danger" id="cancel-allocation-btn">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Datos de la aplicación
+    let accounts = [
+        { id: 1, name: 'Suscripciones de Software', balance: 20700.00 },
+        { id: 2, name: 'Depreciaciones y Amortizaciones', balance: 92774.00 },
+        { id: 3, name: 'Mano de Obra Indirecta', balance: 225600.00 },
+        { id: 4, name: 'Suministros', balance: 300.00 },
+        { id: 5, name: 'Alquiler', balance: 24000.00 },
+        { id: 6, name: 'Electricidad', balance: 3600.00 },
+        { id: 7, name: 'Internet y Telecomunicaciones', balance: 4800.00 },
+        { id: 8, name: 'Mantenimiento de Equipos', balance: 2400.00 },
+        { id: 9, name: 'Capacitaciones', balance: 3000.00 }
+    ];
+    
+    let departments = [
+        { id: 'planificacion', name: 'Unidad de Planificación y Estrategia', type: 'production' },
+        { id: 'desarrollo', name: 'Unidad de Desarrollo de Software', type: 'production' },
+        { id: 'financiera', name: 'Unidad Financiera y Contable', type: 'production' },
+        { id: 'gerencia', name: 'Gerencia General', type: 'production' },
+        { id: 'ventas', name: 'Unidad de Venta', type: 'support' },
+        { id: 'soporte', name: 'Unidad de Soporte Técnico', type: 'support' },
+        { id: 'rh', name: 'Recursos Humanos', type: 'support' },
+        { id: 'servicios', name: 'Unidad de Servicios Generales', type: 'support' }
+    ];
+    
+    let allocations = {};
+    
+    // Elementos del DOM
+    const accountsList = document.getElementById('accounts-list');
+    const departmentsList = document.getElementById('departments-list');
+    const allocationList = document.getElementById('allocation-list');
+    const addAccountBtn = document.getElementById('add-account-btn');
+    const calculateTotalsBtn = document.getElementById('calculate-totals-btn');
+    const calculateAllocationBtn = document.getElementById('calculate-allocation-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    const restoreDefaultsBtn = document.getElementById('restore-defaults-btn');
+    
+    // Elementos del modal
+    const allocationModal = document.getElementById('allocation-modal');
+    const allocationAccountSelect = document.getElementById('allocation-account');
+    const allocationPercentage = document.getElementById('allocation-percentage');
+    const allocationBase = document.getElementById('allocation-base');
+    const departmentsSelection = document.getElementById('departments-selection');
+    const saveAllocationBtn = document.getElementById('save-allocation-btn');
+    const cancelAllocationBtn = document.getElementById('cancel-allocation-btn');
+    const closeModalBtn = document.getElementById('close-modal');
+    
+    // Función para agregar una cuenta
+    function addAccount() {
+        const name = document.getElementById('account-name').value.trim();
+        const balance = parseFloat(document.getElementById('account-balance').value) || 0;
+        
+        if (!name) {
+            alert('Por favor ingrese el nombre de la cuenta');
+            return;
+        }
+        
+        if (balance <= 0) {
+            alert('El saldo debe ser mayor a 0');
+            return;
+        }
+        
+        const account = {
+            id: Date.now(),
+            name,
+            balance
+        };
+        
+        accounts.push(account);
+        updateAccountsTable();
+        clearAccountForm();
+    }
+    
+    // Función para actualizar la tabla de cuentas
+    function updateAccountsTable() {
+        accountsList.innerHTML = '';
+        let total = 0;
+        
+        accounts.forEach(account => {
+            total += account.balance;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${account.name}</td>
+                <td>$${account.balance.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-dark action-btn" onclick="configureAllocation(${account.id})">Configurar Distribución</button>
+                    <button class="btn btn-danger action-btn" onclick="removeAccount(${account.id})">Eliminar</button>
+                </td>
+            `;
+            accountsList.appendChild(row);
+        });
+        
+        document.getElementById('total-accounts').textContent = `$${total.toFixed(2)}`;
+    }
+    
+    // Función para eliminar una cuenta
+    function removeAccount(accountId) {
+        accounts = accounts.filter(acc => acc.id !== accountId);
+        delete allocations[accountId];
+        updateAccountsTable();
+        updateAllocationTable();
+    }
+    
+    // Función para limpiar el formulario de cuentas
+    function clearAccountForm() {
+        document.getElementById('account-name').value = '';
+        document.getElementById('account-balance').value = '0';
+    }
+    
+    // Función para calcular los totales de departamentos
+    function calculateDepartmentTotals() {
+        let totalArea = 0;
+        let totalEmployees = 0;
+        let totalHoursMO = 0;
+        let totalSalaries = 0;
+        let totalHoursMachine = 0;
+        let totalCostMachine = 0;
+        
+        // Actualizar datos de departamentos
+        departments.forEach(dept => {
+            dept.area = parseFloat(document.querySelector(`.department-area[data-department="${dept.id}"]`).value) || 0;
+            dept.employees = parseFloat(document.querySelector(`.department-employees[data-department="${dept.id}"]`).value) || 0;
+            dept.hoursMO = parseFloat(document.querySelector(`.department-hours-mo[data-department="${dept.id}"]`).value) || 0;
+            dept.salaries = parseFloat(document.querySelector(`.department-salaries[data-department="${dept.id}"]`).value) || 0;
+            dept.hoursMachine = parseFloat(document.querySelector(`.department-hours-machine[data-department="${dept.id}"]`).value) || 0;
+            dept.costMachine = parseFloat(document.querySelector(`.department-cost-machine[data-department="${dept.id}"]`).value) || 0;
+            
+            totalArea += dept.area;
+            totalEmployees += dept.employees;
+            totalHoursMO += dept.hoursMO;
+            totalSalaries += dept.salaries;
+            totalHoursMachine += dept.hoursMachine;
+            totalCostMachine += dept.costMachine;
+        });
+        
+        // Actualizar totales en la tabla
+        document.getElementById('total-area').textContent = totalArea;
+        document.getElementById('total-employees').textContent = totalEmployees;
+        document.getElementById('total-hours-mo').textContent = totalHoursMO;
+        document.getElementById('total-salaries').textContent = `$${totalSalaries.toFixed(2)}`;
+        document.getElementById('total-hours-machine').textContent = totalHoursMachine;
+        document.getElementById('total-cost-machine').textContent = `$${totalCostMachine.toFixed(2)}`;
+    }
+    
+    // Función para configurar la distribución de una cuenta
+    function configureAllocation(accountId) {
+        const account = accounts.find(acc => acc.id === accountId);
+        if (!account) return;
+        
+        // Llenar el select de cuentas
+        allocationAccountSelect.innerHTML = '';
+        accounts.forEach(acc => {
+            const option = document.createElement('option');
+            option.value = acc.id;
+            option.textContent = acc.name;
+            option.selected = acc.id === accountId;
+            allocationAccountSelect.appendChild(option);
+        });
+        
+        // Llenar la lista de departamentos
+        departmentsSelection.innerHTML = '';
+        departments.forEach(dept => {
+            const deptItem = document.createElement('div');
+            deptItem.className = 'department-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `dept-${dept.id}`;
+            checkbox.value = dept.id;
+            checkbox.checked = true;
+            
+            const label = document.createElement('label');
+            label.htmlFor = `dept-${dept.id}`;
+            label.className = 'department-name';
+            label.textContent = dept.name;
+            
+            deptItem.appendChild(checkbox);
+            deptItem.appendChild(label);
+            departmentsSelection.appendChild(deptItem);
+        });
+        
+        // Cargar configuración existente si existe
+        if (allocations[accountId]) {
+            allocationPercentage.value = allocations[accountId].percentage;
+            allocationBase.value = allocations[accountId].base;
+            
+            // Marcar departamentos seleccionados
+            allocations[accountId].departments.forEach(deptId => {
+                const checkbox = document.getElementById(`dept-${deptId}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        } else {
+            allocationPercentage.value = 100;
+            allocationBase.value = 'area';
+        }
+        
+        // Mostrar el modal
+        allocationModal.style.display = 'flex';
+    }
+    
+    // Función para guardar la configuración de distribución
+    function saveAllocation() {
+        const accountId = parseInt(allocationAccountSelect.value);
+        const percentage = parseFloat(allocationPercentage.value) || 100;
+        const base = allocationBase.value;
+        
+        // Obtener departamentos seleccionados
+        const selectedDepartments = [];
+        document.querySelectorAll('#departments-selection input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedDepartments.push(checkbox.value);
+        });
+        
+        if (selectedDepartments.length === 0) {
+            alert('Debe seleccionar al menos un departamento');
+            return;
+        }
+        
+        // Guardar la configuración
+        allocations[accountId] = {
+            percentage,
+            base,
+            departments: selectedDepartments
+        };
+        
+        // Cerrar el modal
+        allocationModal.style.display = 'none';
+        
+        // Recalcular la distribución
+        calculateAllocation();
+    }
+    
+    // Función para calcular la distribución de costos
+    function calculateAllocation() {
+        // Limpiar la tabla de distribución
+        allocationList.innerHTML = '';
+        
+        // Crear encabezados de departamentos
+        const allocationTable = document.getElementById('allocation-table');
+        const thead = allocationTable.querySelector('thead tr');
+        const tfoot = allocationTable.querySelector('tfoot tr');
+        
+        // Limpiar columnas de departamentos (excepto las dos primeras)
+        while (thead.children.length > 2) {
+            thead.removeChild(thead.lastChild);
+        }
+        while (tfoot.children.length > 2) {
+            tfoot.removeChild(tfoot.lastChild);
+        }
+        
+        // Agregar columnas de departamentos
+        departments.forEach(dept => {
+            const th = document.createElement('th');
+            th.textContent = dept.name;
+            thead.appendChild(th);
+            
+            const td = document.createElement('td');
+            td.id = `total-${dept.id}`;
+            td.textContent = '$0.00';
+            tfoot.appendChild(td);
+        });
+        
+        // Inicializar totales por departamento
+        const departmentTotals = {};
+        departments.forEach(dept => {
+            departmentTotals[dept.id] = 0;
+        });
+        
+        // Calcular distribución para cada cuenta
+        accounts.forEach(account => {
+            if (!allocations[account.id]) {
+                // Si no hay configuración, no distribuir
+                return;
+            }
+            
+            const allocation = allocations[account.id];
+            const amountToAllocate = account.balance * (allocation.percentage / 100);
+            
+            // Calcular total de la base seleccionada en departamentos seleccionados
+            let totalBase = 0;
+            allocation.departments.forEach(deptId => {
+                const dept = departments.find(d => d.id === deptId);
+                if (dept) {
+                    totalBase += dept[allocation.base] || 0;
+                }
+            });
+            
+            // Crear fila para esta cuenta
+            const row = document.createElement('tr');
+            const accountCell = document.createElement('td');
+            accountCell.textContent = account.name;
+            row.appendChild(accountCell);
+            
+            const totalCell = document.createElement('td');
+            totalCell.textContent = `$${amountToAllocate.toFixed(2)}`;
+            row.appendChild(totalCell);
+            
+            // Distribuir el costo entre departamentos seleccionados
+            allocation.departments.forEach(deptId => {
+                const dept = departments.find(d => d.id === deptId);
+                if (dept && totalBase > 0) {
+                    const deptBase = dept[allocation.base] || 0;
+                    const deptAmount = (deptBase / totalBase) * amountToAllocate;
+                    
+                    const deptCell = document.createElement('td');
+                    deptCell.textContent = `$${deptAmount.toFixed(2)}`;
+                    row.appendChild(deptCell);
+                    
+                    // Acumular en totales por departamento
+                    departmentTotals[deptId] += deptAmount;
+                } else {
+                    const deptCell = document.createElement('td');
+                    deptCell.textContent = '$0.00';
+                    row.appendChild(deptCell);
+                }
+            });
+            
+            // Completar con ceros para departamentos no seleccionados
+            departments.forEach(dept => {
+                if (!allocation.departments.includes(dept.id)) {
+                    const deptCell = document.createElement('td');
+                    deptCell.textContent = '$0.00';
+                    row.appendChild(deptCell);
+                }
+            });
+            
+            allocationList.appendChild(row);
+        });
+        
+        // Actualizar totales por departamento
+        let grandTotal = 0;
+        departments.forEach(dept => {
+            const totalCell = document.getElementById(`total-${dept.id}`);
+            totalCell.textContent = `$${departmentTotals[dept.id].toFixed(2)}`;
+            grandTotal += departmentTotals[dept.id];
+        });
+        
+        document.getElementById('total-allocated').textContent = `$${grandTotal.toFixed(2)}`;
+    }
+    
+    // Función para limpiar todo
+    function clearAll() {
+        accounts = [];
+        allocations = {};
+        updateAccountsTable();
+        updateAllocationTable();
+        
+        // Limpiar inputs de departamentos
+        document.querySelectorAll('.form-control').forEach(input => {
+            if (input.id !== 'allocation-percentage' && input.type === 'number') {
+                input.value = '0';
+            }
+        });
+        
+        calculateDepartmentTotals();
+    }
+    
+    // Función para restaurar valores predeterminados
+    function restoreDefaults() {
+        accounts = [
+            { id: 1, name: 'Suscripciones de Software', balance: 20700.00 },
+            { id: 2, name: 'Depreciaciones y Amortizaciones', balance: 92774.00 },
+            { id: 3, name: 'Mano de Obra Indirecta', balance: 225600.00 },
+            { id: 4, name: 'Suministros', balance: 300.00 },
+            { id: 5, name: 'Alquiler', balance: 24000.00 },
+            { id: 6, name: 'Electricidad', balance: 3600.00 },
+            { id: 7, name: 'Internet y Telecomunicaciones', balance: 4800.00 },
+            { id: 8, name: 'Mantenimiento de Equipos', balance: 2400.00 },
+            { id: 9, name: 'Capacitaciones', balance: 3000.00 }
+        ];
+        
+        allocations = {};
+        updateAccountsTable();
+        updateAllocationTable();
+        calculateDepartmentTotals();
+    }
+    
+    // Función para actualizar la tabla de distribución (vacía)
+    function updateAllocationTable() {
+        allocationList.innerHTML = '';
+        
+        const allocationTable = document.getElementById('allocation-table');
+        const thead = allocationTable.querySelector('thead tr');
+        const tfoot = allocationTable.querySelector('tfoot tr');
+        
+        // Limpiar columnas de departamentos (excepto las dos primeras)
+        while (thead.children.length > 2) {
+            thead.removeChild(thead.lastChild);
+        }
+        while (tfoot.children.length > 2) {
+            tfoot.removeChild(tfoot.lastChild);
+        }
+        
+        document.getElementById('total-allocated').textContent = '$0.00';
+    }
+    
+    // Event Listeners
+    addAccountBtn.addEventListener('click', addAccount);
+    calculateTotalsBtn.addEventListener('click', calculateDepartmentTotals);
+    calculateAllocationBtn.addEventListener('click', calculateAllocation);
+    clearAllBtn.addEventListener('click', clearAll);
+    restoreDefaultsBtn.addEventListener('click', restoreDefaults);
+    
+    // Event Listeners del modal
+    saveAllocationBtn.addEventListener('click', saveAllocation);
+    cancelAllocationBtn.addEventListener('click', () => {
+        allocationModal.style.display = 'none';
+    });
+    closeModalBtn.addEventListener('click', () => {
+        allocationModal.style.display = 'none';
+    });
+    
+    // Cerrar modal al hacer clic fuera
+    window.addEventListener('click', (event) => {
+        if (event.target === allocationModal) {
+            allocationModal.style.display = 'none';
+        }
+    });
+    
+    // Permitir agregar cuenta con Enter
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && document.getElementById('account-name').value) {
+            addAccount();
+        }
+    });
+    
+    // Inicializar la tabla de departamentos y cuentas
+    calculateDepartmentTotals();
+    updateAccountsTable();
+</script>
+{% endblock %}

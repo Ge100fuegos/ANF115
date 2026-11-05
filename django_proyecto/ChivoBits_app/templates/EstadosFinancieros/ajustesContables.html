@@ -1,0 +1,552 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ajustes Contables{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Encabezado -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">Ajustes Contables</h1>
+                    {% if periodo_seleccionado %}
+                    <p class="text-muted mb-0">
+                        Del {{ periodo_seleccionado.fecha_inicio|date:"d/m/Y" }} al
+                        {{periodo_seleccionado.fecha_fin|date:"d/m/Y" }}
+                        <span
+                            class="badge {% if periodo_seleccionado.estado == 'ACTIVO' %}bg-success{% else %}bg-secondary{% endif %} ms-2">
+                            {{ periodo_seleccionado.estado }}
+                        </span>
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- Botón Agregar Ajuste - Solo disponible si el periodo está CERRADO -->
+                    {% if periodo_seleccionado and periodo_seleccionado.estado == 'CERRADO' %}
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#agregarAjusteModal">
+                        <i class="bi bi-plus-circle me-2"></i>Agregar Ajuste
+                    </button>
+                    {% else %}
+                    <button class="btn btn-primary" disabled title="Solo disponible para períodos activos">
+                        <i class="bi bi-plus-circle me-2"></i>Agregar Ajuste
+                    </button>
+                    {% endif %}
+
+                    <!-- Botón Seleccionar Período - Siempre disponible -->
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#seleccionarPeriodo">
+                        <i class="bi bi-calendar me-2"></i>Período
+                    </button>
+
+                    <!-- Botón Generar Estados Financieros - Solo disponible si el periodo está cerrado -->
+                    {% if periodo_seleccionado and periodo_seleccionado.estado == 'CERRADO' %}
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generarEstadosModal">
+                        <i class="bi bi-check-circle me-2"></i>Generar Estados Financieros
+                    </button>
+                    {% else %}
+                    <button class="btn btn-success" disabled title="Solo disponible para períodos finalizados">
+                        <i class="bi bi-check-circle me-2"></i>Generar Estados Financieros
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas importantes -->
+    {% if periodo_seleccionado.estado == 'ACTIVO' %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-info-circle me-3 fs-4"></i>
+                <div>
+                    <strong>Período en curso</strong> - No puede realizar ajustes contables.
+                    El Balance de Comprobación estará disponible después de cerrar el período.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning d-flex align-items-center">
+                <i class="bi bi-lock me-3 fs-4"></i>
+                <div>
+                    <strong>Período cerrado</strong> - Puede realizar ajustes.
+                    Para ver los balances finales, haga clic en "Generar Estados Financieros".
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+
+    <!-- Tabla de ajustes MODIFICADA -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th width="80">No.</th>
+                                    <th width="100">Fecha</th>
+                                    <th width="100">Código</th>
+                                    <th width="200">Cuenta</th>
+                                    <th>Descripción</th>
+                                    <th width="120" class="text-end">DEBE</th>
+                                    <th width="120" class="text-end">HABER</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ajuste in ajustes %}
+                                <tr>
+                                    <td class="fw-bold">{{ ajuste.numero_transaccion }}</td>
+                                    <td>{{ ajuste.fecha|date:"d/m/Y" }}</td>
+                                    <td><strong>{{ ajuste.cuenta.codigo }}</strong></td>
+                                    <td>{{ ajuste.cuenta.nombre }}</td>
+                                    <td>
+                                        <span class="d-inline-block text-truncate" style="max-width: 300px;"
+                                            title="{{ ajuste.descripcion }}">
+                                            {{ ajuste.descripcion }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end {% if ajuste.debe > 0 %}text-success fw-bold{% endif %}">
+                                        {% if ajuste.debe > 0 %}$ {{ ajuste.debe|floatformat:2 }}{% else %}-{% endif %}
+                                    </td>
+                                    <td class="text-end {% if ajuste.haber > 0 %}text-danger fw-bold{% endif %}">
+                                        {% if ajuste.haber > 0 %}$ {{ ajuste.haber|floatformat:2 }}{% else %}-{% endif%}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="bi bi-journal-x display-4 text-muted"></i>
+                                        <p class="text-muted mt-2 mb-0">No hay ajustes contables registrados</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-active fw-bold">
+                                <tr>
+                                    <td colspan="5" class="text-center">TOTALES</td>
+                                    <td class="text-end text-success">$ {{ total_debe|floatformat:2 }}</td>
+                                    <td class="text-end text-danger">$ {{ total_haber|floatformat:2 }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Ajuste (MODIFICADO) -->
+<div class="modal fade" id="agregarAjusteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar Ajuste Contable
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <form id="formAjuste">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="fechaAjuste" class="form-label">Fecha *</label>
+                            <input type="date" class="form-control" id="fechaAjuste" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="numeroAjuste" class="form-label">No. Ajuste</label>
+                            <input type="text" class="form-control" id="numeroAjuste" readonly>
+                        </div>
+                        <div class="col-12">
+                            <label for="descripcionAjuste" class="form-label">Descripción *</label>
+                            <textarea class="form-control" id="descripcionAjuste" rows="2" required></textarea>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h6 class="mb-3">Cuentas Afectadas</h6>
+                    <div id="cuentasContainer">
+                        <div class="row g-2 mb-3 cuenta-fila">
+                            <div class="col-md-5">
+                                <select class="form-select select-cuenta" required>
+                                    <option value="">Seleccionar cuenta...</option>
+                                    {% for cuenta in cuentas %}
+                                    <option value="{{ cuenta.id }}" data-tipo="{{ cuenta.tipo }}">
+                                        {{ cuenta.codigo }} - {{ cuenta.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select tipo-movimiento" required>
+                                    <option value="">Tipo...</option>
+                                    <option value="debe">DEBE</option>
+                                    <option value="haber">HABER</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" class="form-control monto" step="0.01" min="0" placeholder="0.00"
+                                    required>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-outline-danger btn-sm quitar-cuenta" disabled>
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="agregarCuenta">
+                        <i class="bi bi-plus me-1"></i>Agregar otra cuenta
+                    </button>
+
+                    <hr class="my-4">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-info mb-0">
+                                <div class="d-flex justify-content-between">
+                                    <span>Total DEBE:</span>
+                                    <strong id="totalDebe">$ 0.00</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total HABER:</span>
+                                    <strong id="totalHaber">$ 0.00</strong>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>Diferencia:</span>
+                                    <strong id="diferencia" class="text-success">$ 0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div id="estadoBalance" class="alert alert-warning mb-0 w-100">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <span>Ajuste desbalanceado</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información del período -->
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <i class="bi bi-info-circle me-1"></i>
+                            Este ajuste se registrará en el período <strong>{{ periodo_seleccionado.año }}</strong>
+                            ({{ periodo_seleccionado.fecha_inicio|date:"d/m/Y" }} - {{periodo_seleccionado.fecha_fin|date:"d/m/Y" }})
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardarAjuste" disabled>
+                        <i class="bi bi-check-circle me-1"></i>Guardar Ajuste
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Seleccionar Periodo -->
+<div class="modal fade" id="seleccionarPeriodo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Seleccionar Período Contable</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="GET" action="{% url 'ajustes_contables' %}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="selectPeriodo" class="form-label">Seleccione un período:</label>
+                        <select id="selectPeriodo" class="form-select" name="periodo_id" required>
+                            <option value="">Seleccionar período</option>
+                            {% for periodo in periodos %}
+                            <option value="{{ periodo.id }}" {% if periodo.id == periodo_seleccionado.id %}selected{%endif%}>
+                                {{ periodo.año }} ({{ periodo.fecha_inicio|date:"d/m/Y" }} -
+                                {{periodo.fecha_fin|date:"d/m/Y" }})- {{ periodo.estado }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Por favor seleccione un período</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Seleccionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Generar Estados Financieros -->
+<div class="modal fade" id="generarEstadosModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-earmark-text me-2"></i>Generar Estados Financieros
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'generar_estados_financieros' %}">
+                {% csrf_token %}
+                <!-- AGREGAR ESTA LÍNEA: Campo hidden con el periodo_id -->
+                <input type="hidden" name="periodo_id" value="{{ periodo_seleccionado.id }}">
+                
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-graph-up text-info display-4"></i>
+                    </div>
+                    <p class="text-center fw-bold">¿Generar Estados Financieros del período?</p>
+
+                    <div class="alert alert-info" role="alert">
+                        <small>
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Se generarán los siguientes reportes:</strong>
+                            <ul class="mt-2 mb-1">
+                                <li>Balance de Comprobación (Sin Ajustar y Ajustado)</li>
+                                <li>Estado de Resultados</li>
+                                <li>Estado de Capital</li>
+                                <li>Balance General</li>
+                            </ul>
+                            Será redirigido automáticamente al Balance de Comprobación.
+                        </small>
+                    </div>
+
+                    <!-- Información del periodo -->
+                    {% if periodo_seleccionado %}
+                    <div class="card border-info">
+                        <div class="card-body py-2">
+                            <small class="text-muted">Período seleccionado:</small>
+                            <div class="d-flex justify-content-between">
+                                <span><strong>{{ periodo_seleccionado.año }}</strong></span>
+                                <span>{{ periodo_seleccionado.fecha_inicio|date:"d/m/Y" }} -
+                                    {{periodo_seleccionado.fecha_fin|date:"d/m/Y" }}</span>
+                            </div>
+                            <small class="text-muted">Estado: {{ periodo_seleccionado.estado }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-graph-up me-1"></i>Generar Estados
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_scripts %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Funcionalidad del modal de ajuste contable
+        const agregarCuentaBtn = document.getElementById('agregarCuenta');
+        const cuentasContainer = document.getElementById('cuentasContainer');
+        const formAjuste = document.getElementById('formAjuste');
+
+        // Establecer fecha actual por defecto
+        document.getElementById('fechaAjuste').valueAsDate = new Date();
+
+        if (agregarCuentaBtn && cuentasContainer) {
+            agregarCuentaBtn.addEventListener('click', function () {
+                const nuevaFila = document.querySelector('.cuenta-fila').cloneNode(true);
+                const quitarBtn = nuevaFila.querySelector('.quitar-cuenta');
+                quitarBtn.disabled = false;
+
+                nuevaFila.querySelector('.select-cuenta').value = '';
+                nuevaFila.querySelector('.tipo-movimiento').value = '';
+                nuevaFila.querySelector('.monto').value = '';
+
+                cuentasContainer.appendChild(nuevaFila);
+                actualizarTotales();
+            });
+
+            cuentasContainer.addEventListener('click', function (e) {
+                if (e.target.closest('.quitar-cuenta')) {
+                    const fila = e.target.closest('.cuenta-fila');
+                    if (document.querySelectorAll('.cuenta-fila').length > 1) {
+                        fila.remove();
+                        actualizarTotales();
+                    }
+                }
+            });
+
+            cuentasContainer.addEventListener('input', actualizarTotales);
+
+            function actualizarTotales() {
+                let totalDebe = 0;
+                let totalHaber = 0;
+
+                document.querySelectorAll('.cuenta-fila').forEach(fila => {
+                    const tipo = fila.querySelector('.tipo-movimiento').value;
+                    const monto = parseFloat(fila.querySelector('.monto').value) || 0;
+
+                    if (tipo === 'debe') {
+                        totalDebe += monto;
+                    } else if (tipo === 'haber') {
+                        totalHaber += monto;
+                    }
+                });
+
+                document.getElementById('totalDebe').textContent = '$ ' + totalDebe.toFixed(2);
+                document.getElementById('totalHaber').textContent = '$ ' + totalHaber.toFixed(2);
+
+                const diferencia = totalDebe - totalHaber;
+                document.getElementById('diferencia').textContent = '$ ' + Math.abs(diferencia).toFixed(2);
+
+                const estadoBalance = document.getElementById('estadoBalance');
+                const btnGuardar = document.getElementById('btnGuardarAjuste');
+
+                if (diferencia === 0 && totalDebe > 0) {
+                    estadoBalance.className = 'alert alert-success mb-0 w-100';
+                    estadoBalance.innerHTML = '<i class="bi bi-check-circle me-2"></i><span>Ajuste balanceado</span>';
+                    btnGuardar.disabled = false;
+                } else {
+                    estadoBalance.className = 'alert alert-warning mb-0 w-100';
+                    estadoBalance.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i><span>Ajuste desbalanceado</span>';
+                    btnGuardar.disabled = true;
+                }
+            }
+
+            // Enviar formulario de ajuste
+            formAjuste.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                // Mostrar loading
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Guardando...';
+                submitBtn.disabled = true;
+
+                const fecha = document.getElementById('fechaAjuste').value;
+                const descripcion = document.getElementById('descripcionAjuste').value;
+                const cuentasAfectadas = [];
+
+                document.querySelectorAll('.cuenta-fila').forEach(fila => {
+                    const cuentaId = fila.querySelector('.select-cuenta').value;
+                    const tipo = fila.querySelector('.tipo-movimiento').value;
+                    const monto = parseFloat(fila.querySelector('.monto').value);
+
+                    if (cuentaId && tipo && monto > 0) {
+                        cuentasAfectadas.push({
+                            cuenta_id: cuentaId,
+                            tipo: tipo,
+                            monto: monto
+                        });
+                    }
+                });
+
+                const data = {
+                    fecha: fecha,
+                    descripcion: descripcion,
+                    cuentas_afectadas: cuentasAfectadas,
+                    es_ajuste: true  // Marcar como ajuste
+                };
+
+                fetch('{% url "crear_ajuste" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Restaurar botón
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+
+                        if (data.success) {
+                            // Cerrar modal y recargar
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('agregarAjusteModal'));
+                            modal.hide();
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 500);
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        // Restaurar botón
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                        alert('Error al crear el ajuste: ' + error.message);
+                        console.error('Error:', error);
+                    });
+            });
+        }
+
+        // Limpiar formulario cuando se cierre el modal
+        const ajusteModal = document.getElementById('agregarAjusteModal');
+        if (ajusteModal) {
+            ajusteModal.addEventListener('hidden.bs.modal', function () {
+                const form = document.getElementById('formAjuste');
+                if (form) {
+                    form.reset();
+                    // Limpiar contenedor de cuentas y dejar solo una fila
+                    const cuentasContainer = document.getElementById('cuentasContainer');
+                    cuentasContainer.innerHTML = `
+                    <div class="row g-2 mb-3 cuenta-fila">
+                        <div class="col-md-5">
+                            <select class="form-select select-cuenta" required>
+                                <option value="">Seleccionar cuenta...</option>
+                                {% for cuenta in cuentas %}
+                                <option value="{{ cuenta.id }}" data-tipo="{{ cuenta.tipo }}">
+                                    {{ cuenta.codigo }} - {{ cuenta.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select tipo-movimiento" required>
+                                <option value="">Tipo...</option>
+                                <option value="debe">DEBE</option>
+                                <option value="haber">HABER</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" class="form-control monto" step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-outline-danger btn-sm quitar-cuenta" disabled>
+                                <i class="bi bi-dash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                    // Restablecer fecha actual
+                    document.getElementById('fechaAjuste').valueAsDate = new Date();
+                    // Actualizar totales
+                    actualizarTotales();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

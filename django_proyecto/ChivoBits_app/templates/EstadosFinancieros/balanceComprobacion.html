@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Balance de Comprobacion{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">Balance de comprobacion</h1>
+            <p class="text-muted mb-0">Al {{ fecha_balance|default:"31 de diciembre de 2024" }}</p>
+        </div>
+        <div>
+            <a class="btn btn-success me-2" href="{% url 'estado_resultados' %}">
+                <i class="bi bi-bar-chart-line me-2"></i> Estado de resultados
+            </a>
+            <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#seleccionarPeriodo">
+                <i class="bi bi-calendar"></i> Período
+            </button>
+            <a class="btn btn-secondary" href="{% url 'ajustes_contables' %}">
+                <i class="bi bi-gear"></i> Realizar Ajustes
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensajes de alerta -->
+    <!--{% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}-->
+
+    <!-- Información del período -->
+    {% if periodo_actual %}
+    <div class="alert alert-info">
+        <strong>Período actual:</strong> {{ periodo_actual.año }} 
+        ({{ periodo_actual.fecha_inicio|date:"d/m/Y" }} - {{ periodo_actual.fecha_fin|date:"d/m/Y" }})
+        <span class="badge bg-{% if periodo_actual.estado == 'ACTIVO' %}success{% else %}secondary{% endif %} ms-2">
+            {{ periodo_actual.estado }}
+        </span>
+        {% if periodo_actual.estado == 'CERRADO' %}
+        <span class="badge bg-success ms-1">
+            <i class="bi bi-lock"></i> Balance Generado
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Tabla de balance -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered text-center align-middle">
+                    <thead class="table-light text-start">
+                        <tr>
+                            <th rowspan="2" class="align-middle text-center">Cuenta</th>
+                            <th colspan="2" class="text-center">Balance de Comprobación</th>
+                            <th colspan="2" class="text-center">Ajustes</th>
+                            <th colspan="2" class="text-center">Balance Ajustado</th>
+                        </tr>
+                        <tr>
+                            <th class="text-center">DEBE</th>
+                            <th class="text-center">HABER</th>
+                            <th class="text-center">DEBE</th>
+                            <th class="text-center">HABER</th>
+                            <th class="text-center">DEBE</th>
+                            <th class="text-center">HABER</th>
+                        </tr>
+                    </thead>
+                    <tbody class="fs-6">
+                        {% for cuenta in cuentas %}
+                        <tr>
+                            <td class="text-start">
+                                <strong>{{ cuenta.codigo }}</strong> - {{ cuenta.nombre }}
+                            </td>
+                            <!-- Balance de Comprobación -->
+                            <td class="text-center">
+                                {% if cuenta.balance_debe > 0 %}
+                                    $ {{ cuenta.balance_debe|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if cuenta.balance_haber > 0 %}
+                                    $ {{ cuenta.balance_haber|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <!-- Ajustes -->
+<td class="text-center">
+    {% if periodo_actual.estado == 'FINALIZADO' and cuenta.ajuste_debe > 0 %}
+        $ {{ cuenta.ajuste_debe|floatformat:2 }}
+    {% else %}
+        -
+    {% endif %}
+</td>
+<td class="text-center">
+    {% if periodo_actual.estado == 'FINALIZADO' and cuenta.ajuste_haber > 0 %}
+        $ {{ cuenta.ajuste_haber|floatformat:2 }}
+    {% else %}
+        -
+    {% endif %}
+</td>
+
+<!-- Balance Ajustado -->
+<td class="text-center">
+    {% if periodo_actual.estado == 'FINALIZADO' and cuenta.balance_ajustado_debe > 0 %}
+        $ {{ cuenta.balance_ajustado_debe|floatformat:2 }}
+    {% else %}
+        -
+    {% endif %}
+</td>
+<td class="text-center">
+    {% if periodo_actual.estado == 'FINALIZADO' and cuenta.balance_ajustado_haber > 0 %}
+        $ {{ cuenta.balance_ajustado_haber|floatformat:2 }}
+    {% else %}
+        -
+    {% endif %}
+</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-exclamation-circle me-2"></i>
+                                    No hay datos disponibles para mostrar
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-success fw-bold">
+    <tr>
+        <td class="text-center">TOTAL</td>
+        <td class="text-center">$ {{ totales.balance_debe|floatformat:2 }}</td>
+        <td class="text-center">$ {{ totales.balance_haber|floatformat:2 }}</td>
+        
+        <!-- Total Ajustes - Solo si el periodo está FINALIZADO -->
+        <td class="text-center">
+            {% if periodo_actual.estado == 'FINALIZADO' %}
+                $ {{ totales.ajuste_debe|floatformat:2 }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+        <td class="text-center">
+            {% if periodo_actual.estado == 'FINALIZADO' %}
+                $ {{ totales.ajuste_haber|floatformat:2 }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+        
+        <!-- Total Balance Ajustado - Solo si el periodo está FINALIZADO -->
+        <td class="text-center">
+            {% if periodo_actual.estado == 'FINALIZADO' %}
+                $ {{ totales.balance_ajustado_debe|floatformat:2 }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+        <td class="text-center">
+            {% if periodo_actual.estado == 'FINALIZADO' %}
+                $ {{ totales.balance_ajustado_haber|floatformat:2 }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+    </tr>
+</tfoot>
+                </table>
+            </div>
+            
+            <!-- Resumen de validación -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card {% if totales.balance_debe == totales.balance_haber %}bg-dark text-white{% else %}bg-warning{% endif %}">
+            <div class="card-body text-center">
+                <h6>Balance Comprobación</h6>
+                <p class="mb-0">
+                    {% if totales.balance_debe == totales.balance_haber %}
+                        <i class="bi bi-check-circle"></i> Cuadra
+                    {% else %}
+                        <i class="bi bi-exclamation-triangle"></i> No cuadra
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ajustes - Solo si el periodo está FINALIZADO -->
+    <div class="col-md-4">
+        <div class="card 
+            {% if periodo_actual.estado == 'FINALIZADO' %}
+                {% if totales.ajuste_debe == totales.ajuste_haber %}bg-dark text-white{% else %}bg-warning{% endif %}
+            {% else %}
+                bg-secondary text-white
+            {% endif %}">
+            <div class="card-body text-center">
+                <h6>Ajustes</h6>
+                <p class="mb-0">
+                    {% if periodo_actual.estado == 'FINALIZADO' %}
+                        {% if totales.ajuste_debe == totales.ajuste_haber %}
+                            <i class="bi bi-check-circle"></i> Cuadra
+                        {% else %}
+                            <i class="bi bi-exclamation-triangle"></i> No cuadra
+                        {% endif %}
+                    {% else %}
+                        <i class="bi bi-dash-circle"></i> No aplica
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Balance Ajustado - Solo si el periodo está FINALIZADO -->
+    <div class="col-md-4">
+        <div class="card 
+            {% if periodo_actual.estado == 'FINALIZADO' %}
+                {% if totales.balance_ajustado_debe == totales.balance_ajustado_haber %}bg-dark text-white{% else %}bg-warning{% endif %}
+            {% else %}
+                bg-secondary text-white
+            {% endif %}">
+            <div class="card-body text-center">
+                <h6>Balance Ajustado</h6>
+                <p class="mb-0">
+                    {% if periodo_actual.estado == 'FINALIZADO' %}
+                        {% if totales.balance_ajustado_debe == totales.balance_ajustado_haber %}
+                            <i class="bi bi-check-circle"></i> Cuadra
+                        {% else %}
+                            <i class="bi bi-exclamation-triangle"></i> No cuadra
+                        {% endif %}
+                    {% else %}
+                        <i class="bi bi-dash-circle"></i> No aplica
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal para seleccionar período contable -->
+<div class="modal fade" id="seleccionarPeriodo" tabindex="-1" aria-labelledby="seleccionarPeriodoLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="seleccionarPeriodoModalLabel">Seleccionar Período Contable</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'balance_comprobacion' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="selectPeriodo" class="form-label">Seleccione un período:</label>
+                        <select id="selectPeriodo" class="form-select" name="periodo_id" required>
+                            <option value="">Seleccionar</option>
+                            {% for periodo in periodos %}
+                                <option value="{{ periodo.id }}" {% if periodo.id == periodo_actual.id %}selected{% endif %}>
+                                    {{ periodo.año }} ({{ periodo.fecha_inicio|date:"d/m/Y" }} - {{ periodo.fecha_fin|date:"d/m/Y" }})
+                                    {% if periodo.estado == 'CERRADO' %} - CERRADO{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Por favor seleccione un período</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Seleccionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'js/formValidacion.js' %}"></script>
+<!-- Js para hacer funcionar modal de eliminación aparte de agregarle la clase delete-btn al boton de eliminar -->
+<script type="text/javascript" src="{% static 'js/modalEliminacion.js' %}"></script>
+<!-- Js para hacer funcionar los toltips y en el boton que lo vayan a implentar debe de poner lo siguiente -> data-bs-placement="top" (puede ser: top, right, bottom,left ) 
+title="El titulo que quieren que salga" (debe de ser corto) data-bs-t="tooltip" -->
+<script type="text/javascript" src="{% static 'js/tooltips.js' %}"></script>
+{% endblock %}

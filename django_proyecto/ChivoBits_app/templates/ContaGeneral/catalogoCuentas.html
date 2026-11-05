@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo de Cuentas{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">Catálogo de Cuentas</h1>
+                    <p class="text-muted mb-0">Sistema de clasificación contable</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#infoModal">
+                        <i class="bi bi-info-circle me-2"></i>Instrucciones
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ total_cuentas }}</h4>
+                            <small>Total Cuentas</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-journal-bookmark fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ cuentas_activo }}</h4>
+                            <small>Cuentas de Activo</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-graph-up-arrow fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ cuentas_pasivo }}</h4>
+                            <small>Cuentas de Pasivo</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-graph-down-arrow fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ cuentas_patrimonio }}</h4>
+                            <small>Cuentas de Patrimonio</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-pie-chart fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label">Buscar cuenta:</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="buscarCuenta" placeholder="Código o nombre de cuenta...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Filtrar por tipo:</label>
+                            <select class="form-select" id="filtroTipo">
+                                <option value="">Todos los tipos</option>
+                                <option value="activo">Activo</option>
+                                <option value="pasivo">Pasivo</option>
+                                <option value="patrimonio">Patrimonio</option>
+                                <option value="ingreso">Ingresos</option>
+                                <option value="gasto">Gastos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Filtrar por nivel:</label>
+                            <select class="form-select" id="filtroNivel">
+                                <option value="">Todos los niveles</option>
+                                <option value="1">Nivel 1 - Grupo</option>
+                                <option value="2">Nivel 2 - Subgrupo</option>
+                                <option value="3">Nivel 3 - Cuenta</option>
+                                <option value="4">Nivel 4 - Subcuenta</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Catálogo -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Lista de Cuentas Contables
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="100" class="fw-bold">Código</th>
+                                    <th>Nombre de la Cuenta</th>
+                                    <th width="120" class="text-center">Nivel</th>
+                                    <th width="120" class="text-center">Tipo</th>
+                                    <th width="100" class="text-center">Naturaleza</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cuenta in cuentas %}
+                                {% if cuenta.codigo|length == 1 %}
+                                <!-- Grupos principales -->
+                                <tr class="table-primary fw-bold">
+                                    <td colspan="6">{{ cuenta.nombre }}</td>
+                                </tr>
+                                {% elif cuenta.codigo|length == 2 %}
+                                <!-- Subgrupos -->
+                                <tr class="table-info">
+                                    <td class="fw-bold">{{ cuenta.codigo }}</td>
+                                    <td class="fw-bold">{{ cuenta.nombre }}</td>
+                                    <td class="text-center"><span class="badge bg-info">Subgrupo</span></td>
+                                    <td class="text-center">
+                                        <span class="badge 
+                                            {% if cuenta.tipo == 'ACTIVO' %}bg-primary
+                                            {% elif cuenta.tipo == 'PASIVO' %}bg-warning text-dark
+                                            {% elif cuenta.tipo == 'PATRIMONIO' %}bg-info
+                                            {% elif cuenta.tipo == 'INGRESO' %}bg-success
+                                            {% elif cuenta.tipo == 'GASTO' %}bg-danger
+                                            {% endif %}">
+                                            {{ cuenta.get_tipo_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge 
+                                            {% if cuenta.tipo == 'ACTIVO' or cuenta.tipo == 'GASTO' %}bg-success
+                                            {% else %}bg-danger
+                                            {% endif %}">
+                                            {% if cuenta.tipo == 'ACTIVO' or cuenta.tipo == 'GASTO' %}Deudora
+                                            {% else %}Acreedora
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% elif cuenta.codigo|length == 4 %}
+                                <!-- Cuentas principales -->
+                                <tr>
+                                    <td class="fw-bold font-monospace">{{ cuenta.codigo }}</td>
+                                    <td>{{ cuenta.nombre }}</td>
+                                    <td class="text-center"><span class="badge bg-warning text-dark">Cuenta</span></td>
+                                    <td class="text-center">
+                                        <span class="badge 
+                                            {% if cuenta.tipo == 'ACTIVO' %}bg-primary
+                                            {% elif cuenta.tipo == 'PASIVO' %}bg-warning text-dark
+                                            {% elif cuenta.tipo == 'PATRIMONIO' %}bg-info
+                                            {% elif cuenta.tipo == 'INGRESO' %}bg-success
+                                            {% elif cuenta.tipo == 'GASTO' %}bg-danger
+                                            {% endif %}">
+                                            {{ cuenta.get_tipo_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge 
+                                            {% if cuenta.tipo == 'ACTIVO' or cuenta.tipo == 'GASTO' %}bg-success
+                                            {% else %}bg-danger
+                                            {% endif %}">
+                                            {% if cuenta.tipo == 'ACTIVO' or cuenta.tipo == 'GASTO' %}Deudora
+                                            {% else %}Acreedora
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <!-- Subcuentas -->
+                                <tr>
+                                    <td class="fw-bold font-monospace">{{ cuenta.codigo }}</td>
+                                    <td class="ps-4">{{ cuenta.nombre }}</td>
+                                    <td class="text-center"><span class="badge bg-dark text-white">Subcuenta</span></td>
+                                    <td class="text-center">
+                                        <span class="badge 
+                                            {% if cuenta.tipo == 'ACTIVO' %}bg-primary
+                                            {% elif cuenta.tipo == 'PASIVO' %}bg-warning text-dark
+                                            {% elif cuenta.tipo == 'PATRIMONIO' %}bg-info
+                                            {% elif cuenta.tipo == 'INGRESO' %}bg-success
+                                            {% elif cuenta.tipo == 'GASTO' %}bg-danger
+                                            {% endif %}">
+                                            {{ cuenta.get_tipo_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge 
+                                            {% if cuenta.tipo == 'ACTIVO' or cuenta.tipo == 'GASTO' %}bg-success
+                                            {% else %}bg-danger
+                                            {% endif %}">
+                                            {% if cuenta.tipo == 'ACTIVO' or cuenta.tipo == 'GASTO' %}Deudora
+                                            {% else %}Acreedora
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Catálogo de cuentas contables - Sistema contable integral
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Instrucciones -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="infoModalLabel">
+                    <i class="bi bi-info-circle me-2"></i>Instrucciones del Catálogo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Estructura del Catálogo:</h6>
+                <ul class="list-unstyled">
+                    <li><span class="badge bg-secondary">Grupo</span> - Nivel 1 (Ej: 1, 2, 3)</li>
+                    <li><span class="badge bg-info">Subgrupo</span> - Nivel 2 (Ej: 11, 21, 31)</li>
+                    <li><span class="badge bg-warning text-dark">Cuenta</span> - Nivel 3 (Ej: 1101, 2101)</li>
+                    <li><span class="badge bg-light text-dark">Subcuenta</span> - Nivel 4 (Ej: 110101, 210101)</li>
+                </ul>
+                
+                <h6 class="mt-3">Naturaleza de las Cuentas:</h6>
+                <ul class="list-unstyled">
+                    <li><span class="badge bg-success">Deudora</span> - Aumenta con débitos (Activos, Gastos)</li>
+                    <li><span class="badge bg-danger">Acreedora</span> - Aumenta con créditos (Pasivos, Patrimonio, Ingresos)</li>
+                </ul>
+
+                <h6 class="mt-3">Tipos de Cuenta:</h6>
+                <ul class="list-unstyled">
+                    <li><span class="badge bg-primary">Activo</span> - Recursos de la empresa</li>
+                    <li><span class="badge bg-warning text-dark">Pasivo</span> - Obligaciones de la empresa</li>
+                    <li><span class="badge bg-info">Patrimonio</span> - Capital y reservas</li>
+                    <li><span class="badge bg-success">Ingreso</span> - Entradas de recursos</li>
+                    <li><span class="badge bg-danger">Gasto</span> - Salidas de recursos</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_scripts %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtros de búsqueda
+    const buscarInput = document.getElementById('buscarCuenta');
+    const filtroTipo = document.getElementById('filtroTipo');
+    const filtroNivel = document.getElementById('filtroNivel');
+    const filas = document.querySelectorAll('tbody tr');
+    
+    function aplicarFiltros() {
+        const textoBusqueda = buscarInput.value.toLowerCase();
+        const tipoSeleccionado = filtroTipo.value;
+        const nivelSeleccionado = filtroNivel.value;
+        
+        filas.forEach(fila => {
+            const textoFila = fila.textContent.toLowerCase();
+            const tipoFila = fila.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+            const nivelFila = fila.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+            
+            const coincideTexto = textoBusqueda === '' || textoFila.includes(textoBusqueda);
+            const coincideTipo = tipoSeleccionado === '' || tipoFila.includes(tipoSeleccionado);
+            const coincideNivel = nivelSeleccionado === '' || nivelFila.includes(nivelSeleccionado);
+            
+            if (coincideTexto && coincideTipo && coincideNivel) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+    
+    buscarInput.addEventListener('input', aplicarFiltros);
+    filtroTipo.addEventListener('change', aplicarFiltros);
+    filtroNivel.addEventListener('change', aplicarFiltros);
+});
+</script>
+{% endblock %}

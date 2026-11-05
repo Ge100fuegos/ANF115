@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Estados Financieros{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Encabezado -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold mb-3">Estados Financieros</h1>
+            <p class="lead">Accede a todos los informes financieros necesarios para una gestión eficiente.</p>
+        </div>
+    </div>
+
+    <!-- Primera fila con 3 tarjetas -->
+    <div class="row mb-4">
+        <!-- Tarjeta 1: Balance de comprobación -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm border-0 transition-all-ease">
+                <div class="card-body text-center p-4">
+                    <!-- Ilustración SVG -->
+                    <div class="mb-3">
+                        <svg width="120" height="120" viewBox="0 0 200 200" class="text-primary">
+                            <path fill="currentColor" d="M50,30 L150,30 L150,170 L50,170 Z" stroke="currentColor" stroke-width="2" fill-opacity="0.1"/>
+                            <path fill="currentColor" d="M60,50 L140,50 L140,70 L60,70 Z" fill-opacity="0.3"/>
+                            <path fill="currentColor" d="M60,90 L140,90 L140,110 L60,110 Z" fill-opacity="0.3"/>
+                            <path fill="currentColor" d="M60,130 L140,130 L140,150 L60,150 Z" fill-opacity="0.3"/>
+                            <circle cx="80" cy="60" r="3" fill="currentColor"/>
+                            <circle cx="80" cy="100" r="3" fill="currentColor"/>
+                            <circle cx="80" cy="140" r="3" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h5 class="card-title fw-bold mt-3">Balance de Comprobación</h5>
+                    <p class="card-text text-muted">Verifica la igualdad entre los débitos y créditos de todas las cuentas.</p>
+                    <a href="{% url 'balance_comprobacion' %}" class="btn btn-primary mt-3 px-4 shadow-sm">Acceder</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 2: Estado de capital -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm border-0 transition-all-ease">
+                <div class="card-body text-center p-4">
+                    <!-- Ilustración SVG -->
+                    <div class="mb-3">
+                        <svg width="120" height="120" viewBox="0 0 200 200" class="text-success">
+                            <path fill="currentColor" d="M40,160 L160,160 L160,40 L100,40 L100,80 L60,80 L60,120 L40,120 Z" fill-opacity="0.1" stroke="currentColor" stroke-width="2"/>
+                            <path fill="currentColor" d="M60,100 L140,100 L140,140 L60,140 Z" fill-opacity="0.3"/>
+                            <path fill="currentColor" d="M80,60 L120,60 L120,80 L80,80 Z" fill-opacity="0.3"/>
+                            <path fill="currentColor" d="M100,40 L100,80" stroke="currentColor" stroke-width="2"/>
+                            <path fill="currentColor" d="M60,80 L100,80" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h5 class="card-title fw-bold mt-3">Estado de Capital</h5>
+                    <p class="card-text text-muted">Analiza los cambios en el capital contable durante un período.</p>
+                    <a href="{% url 'estado_capital' %}" class="btn btn-success mt-3 px-4 shadow-sm">Acceder</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 3: Balance general -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm border-0 transition-all-ease">
+                <div class="card-body text-center p-4">
+                    <!-- Ilustración SVG -->
+                    <div class="mb-3">
+                        <svg width="120" height="120" viewBox="0 0 200 200" class="text-info">
+                            <circle cx="100" cy="100" r="80" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="2"/>
+                            <path fill="currentColor" d="M100,20 L100,180" stroke="currentColor" stroke-width="2"/>
+                            <path fill="currentColor" d="M20,100 L180,100" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="40" fill="currentColor" fill-opacity="0.3"/>
+                            <circle cx="100" cy="100" r="10" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h5 class="card-title fw-bold mt-3">Balance General</h5>
+                    <p class="card-text text-muted">Presenta la situación financiera de la empresa en una fecha específica.</p>
+                    <a href="{% url 'balance_general' %}" class="btn btn-info mt-3 px-4 shadow-sm">Acceder</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Segunda fila con 2 tarjetas centradas -->
+    <div class="row justify-content-center">
+        <!-- Tarjeta 4: Estado de resultados -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm border-0 transition-all-ease">
+                <div class="card-body text-center p-4">
+                    <!-- Ilustración SVG -->
+                    <div class="mb-3">
+                        <svg width="120" height="120" viewBox="0 0 200 200" class="text-warning">
+                            <path fill="currentColor" d="M40,160 L160,160 L160,40 L40,40 Z" fill-opacity="0.1" stroke="currentColor" stroke-width="2"/>
+                            <polyline fill="none" stroke="currentColor" stroke-width="3" points="60,120 80,80 100,100 120,60 140,100"/>
+                            <circle cx="60" cy="120" r="3" fill="currentColor"/>
+                            <circle cx="80" cy="80" r="3" fill="currentColor"/>
+                            <circle cx="100" cy="100" r="3" fill="currentColor"/>
+                            <circle cx="120" cy="60" r="3" fill="currentColor"/>
+                            <circle cx="140" cy="100" r="3" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h5 class="card-title fw-bold mt-3">Estado de Resultados</h5>
+                    <p class="card-text text-muted">Muestra los ingresos, gastos y utilidad o pérdida de un período.</p>
+                    <a href="{% url 'estado_resultados' %}" class="btn btn-warning mt-3 px-4 shadow-sm">Acceder</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 5: Ajustes contables -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm border-0 transition-all-ease">
+                <div class="card-body text-center p-4">
+                    <!-- Ilustración SVG -->
+                    <div class="mb-3">
+                        <svg width="120" height="120" viewBox="0 0 200 200" class="text-secondary">
+                            <circle cx="100" cy="100" r="80" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="2"/>
+                            <path fill="currentColor" d="M60,80 L80,60 L120,100 L140,80" stroke="currentColor" stroke-width="3" fill="none"/>
+                            <path fill="currentColor" d="M60,120 L80,140 L120,100 L140,120" stroke="currentColor" stroke-width="3" fill="none"/>
+                            <circle cx="60" cy="80" r="5" fill="currentColor"/>
+                            <circle cx="80" cy="60" r="5" fill="currentColor"/>
+                            <circle cx="120" cy="100" r="5" fill="currentColor"/>
+                            <circle cx="140" cy="80" r="5" fill="currentColor"/>
+                            <circle cx="60" cy="120" r="5" fill="currentColor"/>
+                            <circle cx="80" cy="140" r="5" fill="currentColor"/>
+                            <circle cx="140" cy="120" r="5" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h5 class="card-title fw-bold mt-3">Ajustes Contables</h5>
+                    <p class="card-text text-muted">Realiza los ajustes necesarios para reflejar la situación real.</p>
+                    <a href="{% url 'ajustes_contables' %}" class="btn btn-secondary mt-3 px-4 shadow-sm">Acceder</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Solo agregamos una clase mínima para la transición -->
+<style>
+    .transition-all-ease {
+        transition: all 0.3s ease;
+    }
+</style>
+
+<!-- Script para animaciones con Bootstrap -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Agregar efectos hover a las tarjetas
+        const cards = document.querySelectorAll('.transition-all-ease');
+        
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.classList.add('shadow-lg');
+                this.style.transform = 'translateY(-5px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.classList.remove('shadow-lg');
+                this.style.transform = 'translateY(0)';
+            });
+        });
+        
+        // Agregar efectos a los botones
+        const buttons = document.querySelectorAll('.btn');
+        
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.classList.add('shadow');
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.classList.remove('shadow');
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% block footer_scripts %}
+{{ block.super }}
+<!-- Js para validar formulario recordando que debe de agregar la clase "needs-validation" al form 
+     y también el atributo "novalidate" y debajo de cada input que quiere validar ponen <div class="invalid-feedback">aca ponen el mensaje que quieren que se muestre</div> 
+     -->
+<script type="text/javascript" th:src="@{/js/formValidacion.js}"></script>
+<!-- Js para hacer funcionar modal de eliminación aparte de agregarle la clase delete-btn al boton de eliminar -->
+<script type="text/javascript" th:src="@{/js/modalEliminacion.js}"></script>
+<!-- Js para hacer funcionar los toltips y en el boton que lo vayan a implentar debe de poner lo siguiente -> data-bs-placement="top" (puede ser: top, right, bottom,left ) 
+     title="El titulo que quieren que salga" (debe de ser corto) data-bs-t="tooltip" -->
+<script type="text/javascript" th:src="@{/js/tooltips.js}"></script>
+{% endblock %}

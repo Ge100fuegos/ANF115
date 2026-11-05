@@ -1,0 +1,57 @@
+{% extends 'baseLogin.html' %}
+{% load static %}
+{% block title %}Inicio{% endblock %}
+{% block navbar %}
+{% endblock %}
+{% block container_wrapper %} 
+{% block content %}
+<div class="principal-container">
+        <div class="conteiner-logo-login">
+            <img src="{% static 'image/logo_ChivoBits.png' %}" width="300">
+            <h2>Contaduria General</h2>
+        </div>
+        <div class="form-container-login">
+    <div class="login-container-login">
+            <h2>Iniciar Sesión</h2>
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group-login">
+                    <label for="username">Usuario</label>
+                    <input type="text" name="username" id="username" placeholder="  Ingresa tu usuario">
+                </div>
+                
+                <div class="form-group-login">
+                    <label for="password">Contraseña</label>
+                    <input type="password" name="password" id="password" placeholder="  Ingresa tu contraseña">
+                </div>
+                
+                <button class="btn-login">Ingresar</button>
+                
+                <div class="divider-login"></div>
+                
+                <div class="forgot-password-login">
+                    <a href="#">¿Olvidó su contraseña?</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+<div class="area-login" >
+            <ul class="circles-login">
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+            </ul>
+    </div >
+{% endblock content%}
+{% endblock container_wrapper %} 

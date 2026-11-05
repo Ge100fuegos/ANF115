@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Balance General{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+    <!-- Encabezado principal -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 fw-bold mb-3">Balance General</h1>
+            <div class="d-flex justify-content-center align-items-center flex-wrap gap-3">
+                {% if periodo_actual %}
+                <div class="bg-light text-dark px-3 py-2 rounded-pill">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    <span>Periodo: {{ periodo_actual.año }}</span>
+                </div>
+                {% endif %}
+                <button class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#seleccionarPeriodo">
+                    <i class="bi bi-calendar-range me-2"></i> Cambiar Período
+                </button>
+                <button class="btn btn-success" onclick="window.print()">
+                    <i class="bi bi-printer me-2"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerta si el balance no cuadra -->
+    {% if not balance_cuadra %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">¡Balance desequilibrado!</h5>
+                    <p class="mb-0">DEBE ($ {{ total_debe|floatformat:2 }}) ≠ HABER ($ {{ total_haber|floatformat:2 }})</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabla del Balance General -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header card-header-custom py-3">
+                    <h3 class="mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i> Balance General</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="fw-bold ps-4">Código</th>
+                                    <th class="fw-bold">Cuenta</th>
+                                    <th class="fw-bold text-end pe-4">DEBE</th>
+                                    <th class="fw-bold text-end pe-4">HABER</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- SECCIÓN ACTIVOS -->
+                                <tr class="table-info">
+                                    <td colspan="4" class="fw-bold ps-4 bg-primary text-white">
+                                        <i class="bi bi-graph-up me-2"></i>ACTIVOS
+                                    </td>
+                                </tr>
+                                {% for activo in activos %}
+                                <tr>
+                                    <td class="ps-4 fw-semibold">{{ activo.codigo }}</td>
+                                    <td>{{ activo.nombre }}</td>
+                                    <td class="text-end text-success fw-bold pe-4">
+                                        {% if activo.es_deudor %}
+                                            $ {{ activo.saldo|floatformat:2 }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-danger fw-bold pe-4">
+                                        {% if not activo.es_deudor %}
+                                            $ {{ activo.saldo|floatformat:2 }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">
+                                        No hay cuentas de activo con saldo
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="table-active">
+                                    <td colspan="2" class="fw-bold ps-4">TOTAL ACTIVOS</td>
+                                    <td class="text-end fw-bolder text-success pe-4">$ {{ total_debe_activos|floatformat:2 }}</td>
+                                    <td class="text-end fw-bolder text-danger pe-4">$ {{ total_haber_activos|floatformat:2 }}</td>
+                                </tr>
+
+                                <!-- SECCIÓN PASIVOS -->
+                                <tr class="table-warning">
+                                    <td colspan="4" class="fw-bold ps-4 bg-warning text-dark">
+                                        <i class="bi bi-graph-down me-2"></i>PASIVOS
+                                    </td>
+                                </tr>
+                                {% for pasivo in pasivos %}
+                                <tr>
+                                    <td class="ps-4 fw-semibold">{{ pasivo.codigo }}</td>
+                                    <td>{{ pasivo.nombre }}</td>
+                                    <td class="text-end text-success fw-bold pe-4">
+                                        {% if not pasivo.es_acreedor %}
+                                            $ {{ pasivo.saldo|floatformat:2 }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-danger fw-bold pe-4">
+                                        {% if pasivo.es_acreedor %}
+                                            $ {{ pasivo.saldo|floatformat:2 }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">
+                                        No hay cuentas de pasivo con saldo
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="table-active">
+                                    <td colspan="2" class="fw-bold ps-4">TOTAL PASIVOS</td>
+                                    <td class="text-end fw-bolder text-success pe-4">
+                                        $ {{ total_debe_pasivos|floatformat:2 }}
+                                    </td>
+                                    <td class="text-end fw-bolder text-danger pe-4">
+                                        $ {{ total_haber_pasivos|floatformat:2 }}
+                                    </td>
+                                </tr>
+
+                                <!-- SECCIÓN PATRIMONIO -->
+                                <tr class="table-success">
+                                    <td colspan="4" class="fw-bold ps-4 bg-success text-white">
+                                        <i class="bi bi-shield-check me-2"></i>PATRIMONIO
+                                    </td>
+                                </tr>
+                                {% for cuenta in patrimonio %}
+                                <tr>
+                                    <td class="ps-4 fw-semibold">{{ cuenta.codigo }}</td>
+                                    <td>{{ cuenta.nombre }}</td>
+                                    <td class="text-end text-success fw-bold pe-4">
+                                        {% if not cuenta.es_acreedor %}
+                                            $ {{ cuenta.saldo|floatformat:2 }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-danger fw-bold pe-4">
+                                        {% if cuenta.es_acreedor %}
+                                            $ {{ cuenta.saldo|floatformat:2 }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">
+                                        No hay cuentas de patrimonio con saldo
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="table-active">
+                                    <td colspan="2" class="fw-bold ps-4">TOTAL PATRIMONIO</td>
+                                    <td class="text-end fw-bolder text-success pe-4">
+                                        $ {{ total_debe_patrimonio|floatformat:2 }}
+                                    </td>
+                                    <td class="text-end fw-bolder text-danger pe-4">
+                                        $ {{ total_haber_patrimonio|floatformat:2 }}
+                                    </td>
+                                </tr>
+
+                                <!-- TOTALES FINALES -->
+                                <tr class="table-secondary border-top-3">
+                                    <td colspan="2" class="fw-bold ps-4 fs-5">TOTAL GENERAL</td>
+                                    <td class="text-end fw-bolder fs-5 text-success pe-4">$ {{ total_debe|floatformat:2 }}</td>
+                                    <td class="text-end fw-bolder fs-5 pe-4">
+                                        <span class="{% if balance_cuadra %}text-success{% else %}text-danger{% endif %}">
+                                            $ {{ total_haber|floatformat:2 }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen del Balance -->
+            <div class="row mt-4">
+                <div class="col-md-4 mb-3">
+                    <div class="card border-0 bg-primary bg-opacity-10 h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-primary fw-bold">
+                                <i class="bi bi-graph-up me-2"></i>Total DEBE
+                            </h5>
+                            <p class="h3 fw-bold text-primary mb-0">$ {{ total_debe|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card border-0 bg-warning bg-opacity-10 h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-warning fw-bold">
+                                <i class="bi bi-graph-down me-2"></i>Total HABER
+                            </h5>
+                            <p class="h3 fw-bold text-warning mb-0">$ {{ total_haber|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card border-0 {% if balance_cuadra %}bg-success{% else %}bg-danger{% endif %} bg-opacity-10 h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title {% if balance_cuadra %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                <i class="bi {% if balance_cuadra %}bi-check-circle{% else %}bi-x-circle{% endif %} me-2"></i>
+                                Estado
+                            </h5>
+                            <p class="h3 fw-bold {% if balance_cuadra %}text-success{% else %}text-danger{% endif %} mb-0">
+                                {% if balance_cuadra %}Cuadra{% else %}No Cuadra{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado del Balance -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="card border-0 {% if balance_cuadra %}bg-success bg-opacity-10{% else %}bg-danger bg-opacity-10{% endif %}">
+                        <div class="card-body text-center">
+                            <h5 class="card-title {% if balance_cuadra %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                <i class="bi {% if balance_cuadra %}bi-check-circle{% else %}bi-x-circle{% endif %} me-2"></i>
+                                {% if balance_cuadra %}Balance Cuadra Correctamente{% else %}Balance No Cuadra{% endif %}
+                            </h5>
+                            <p class="mb-0 {% if balance_cuadra %}text-success{% else %}text-danger{% endif %}">
+                                DEBE ($ {{ total_debe|floatformat:2 }}) 
+                                {% if balance_cuadra %}={% else %}≠{% endif %} 
+                                HABER ($ {{ total_haber|floatformat:2 }})
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seleccionar período contable -->
+<div class="modal fade" id="seleccionarPeriodo" tabindex="-1" aria-labelledby="seleccionarPeriodoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="seleccionarPeriodoModalLabel">
+                    <i class="bi bi-calendar-range me-2"></i> Seleccionar Período Contable
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="GET" action="{% url 'balance_general' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="selectPeriodo" class="form-label">Seleccione un período:</label>
+                        <select id="selectPeriodo" class="form-select" name="periodo_id" required>
+                            <option value="">Seleccionar período</option>
+                            {% for periodo in periodos %}
+                                <option value="{{ periodo.id }}" 
+                                    {% if periodo_actual and periodo.id == periodo_actual.id %}selected{% endif %}>
+                                    {{ periodo.año }} - {{ periodo.estado }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i> Seleccionar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'js/formValidacion.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/modalEliminacion.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/tooltips.js' %}"></script>
+{% endblock %}

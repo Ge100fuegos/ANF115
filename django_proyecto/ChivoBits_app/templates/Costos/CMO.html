@@ -1,0 +1,528 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadora de Mano de Obra Directa{% endblock %}
+
+{% block content %}
+<style>
+    .bg-pepe{
+        background-color: #050B31;
+        color: #ffffff;              /* text-white */
+        text-align: center;          /* text-center */
+        border-radius: 0.25rem;      /* rounded */
+        margin-bottom: 1.5rem;       /* mb-4 */
+        padding: 1.5rem;             /* p-4 */
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15); /* shadow */
+        border-radius: 10px;
+    }
+
+    /* --- CAMBIO: Estilos para la nueva lista de checkboxes --- */
+    #team-checkbox-list {
+        height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ced4da; /* Color de borde estándar de Bootstrap */
+        border-radius: 0.25rem;    /* Borde redondeado de Bootstrap */
+        padding: 0.75rem;
+        background-color: #ffffff;
+    }
+    #team-checkbox-list .form-check {
+        margin-bottom: 0.5rem; /* Espacio entre cada empleado */
+    }
+    /* --- Fin del Cambio --- */
+
+</style>
+<div class="container">
+    <header class="bg-pepe">
+        <h1 class="display-4 fw-bold">Calculadora de Mano de Obra Directa</h1>
+        <p class="lead">Cálculo de costos reales de empleados con prestaciones sociales</p>
+    </header>
+    
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">1. Datos del Empleado</h2>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-6 col-lg-3">
+                    <label for="employee-name" class="form-label">Nombre del Empleado:</label>
+                    <input type="text" id="employee-name" class="form-control" placeholder="Nombre completo">
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <label for="employee-position" class="form-label">Puesto:</label>
+                    <select id="employee-position" class="form-select">
+                        <option value="" data-salary="0" selected>Seleccione un puesto</option>
+                        <option value="Jefe de desarrollo" data-salary="66.67">Jefe de desarrollo/Líder de proyecto</option>
+                        <option value="Analista de sistema" data-salary="60.00">Analistas de sistemas</option>
+                        <option value="Programador Senior" data-salary="60.00">Programador Senior</option>
+                        <option value="Programador Junior" data-salary="53.33">Programador Junior</option>
+                        <option value="Tester / QA" data-salary="53.33">Tester / QA</option>
+                        <option value="Diseñadores UX/UI" data-salary="53.33">Diseñadores UX/UI</option>
+                        <option value="Otros" data-salary="0">Otros</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <label for="daily-salary" class="form-label">Salario Diario ($):</label>
+                    <input type="number" id="daily-salary" class="form-control" min="0" step="0.01" value="0" readonly>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <label for="worked-days" class="form-label">Días Laborados (Semana):</label>
+                    <input type="number" id="worked-days" class="form-control" min="0" max="7" step="0.1" value="0">
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <label for="daily-hours" class="form-label">Horas Diarias:</label>
+                    <input type="number" id="daily-hours" class="form-control" min="0" max="24" value="8">
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <label for="efficiency" class="form-label">Eficiencia (%):</label>
+                    <input type="number" id="efficiency" class="form-control" min="0" max="100" value="100">
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <label for="afp-type" class="form-label">Tipo AFP:</label>
+                    <select id="afp-type" class="form-select">
+                        <option value="afiliado">Afiliado</option>
+                        <option value="empleador">Empleador</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <label for="salary-base" class="form-label">Base para Prestaciones:</label>
+                    <select id="salary-base" class="form-select">
+                        <option value="nominal">Salario Nominal</option>
+                        <option value="cancelado">Salario Cancelado</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6 col-lg-3">
+                    <label for="years-company" class="form-label">Años en Empresa:</label>
+                    <select id="years-company" class="form-select">
+                        <option value="1-3">1 a 3 años</option>
+                        <option value="3-10">3 a 10 años</option>
+                        <option value="10+">Más de 10 años</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button class="btn btn-dark fw-bold me-2" id="add-employee-btn">Agregar Empleado</button>
+                <button class="btn btn-warning fw-bold" id="clear-form-btn">Limpiar Formulario</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">2. Armar Equipo de Trabajo</h2>
+            
+            <div class="row g-3">
+                <div class="col-md-9">
+                    <label for="team-checkbox-list" class="form-label">Seleccionar Miembros del Equipo:</label>
+                    <div id="team-checkbox-list">
+                        </div>
+                </div>
+                <div class="col-md-3 d-flex flex-column justify-content-between">
+                    <div>
+                        <button class="btn btn-outline-secondary w-100 mb-2" id="select-all-team-btn">Seleccionar Todos</button>
+                        <button class="btn btn-outline-secondary w-100" id="deselect-all-team-btn">Deseleccionar Todos</button>
+                    </div>
+                    <button class="btn btn-dark fw-bold w-100" id="calculate-team-btn">Calcular Equipo Seleccionado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">3. Cálculos por Empleado (Equipo Seleccionado)</h2>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="calculations-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Séptimo Día</th>
+                            <th>Vacaciones</th>
+                            <th>Aguinaldo</th>
+                            <th>ISSS</th>
+                            <th>AFP</th>
+                            <th>Costo Real</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calculations-list">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title h4 border-bottom pb-2 mb-3">4. Totales Generales (Equipo Seleccionado)</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Concepto</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Total Séptimo Día</td>
+                            <td id="total-septimo">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Total Vacaciones</td>
+                            <td id="total-vacaciones">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Total Aguinaldo</td>
+                            <td id="total-aguinaldo">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Total ISSS</td>
+                            <td id="total-isss">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Total AFP</td>
+                            <td id="total-afp">$0.00</td>
+                        </tr>
+                        <tr class="table-primary fw-bold">
+                            <td>Costo Total Mano de Obra</td>
+                            <td id="total-costo">$0.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mt-4">
+        <button class="btn btn-dark fw-bold me-2" id="calculate-all-btn">Calcular Equipo</button>
+        <button class="btn btn-warning fw-bold" id="clear-all-btn">Limpiar Empleados Agregados</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_scripts %}
+<script>
+    // Array para almacenar la MASTER LIST de empleados
+    let employees = [];
+    
+    // Empleados predeterminados (Sin cambios)
+    const defaultEmployees = [
+        { id: -1, name: "Víctor Sanchez", dailySalary: 66.67, workedDays: 5, dailyHours: 8, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "10+", puesto: "Jefe de Desarrollo", isDefault: true },
+        { id: -2, name: "Dolores Tobar", dailySalary: 60.00, workedDays: 5, dailyHours: 6, efficiency: 75, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "10+", puesto: "Jefe de Desarrollo", isDefault: true },
+        { id: -3, name: "Efraín Alfaro", dailySalary: 60.00, workedDays: 4, dailyHours: 6, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "3-10", puesto: "Analista de sistema", isDefault: true },
+        { id: -4, name: "Javier Martinez", dailySalary: 60.00, workedDays: 4, dailyHours: 6, efficiency: 75, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "3-10", puesto: "Analista de sistema", isDefault: true },
+        { id: -5, name: "Rodrigo Lopez", dailySalary: 60.00, workedDays: 5.5, dailyHours: 8, efficiency: 75, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "10+", puesto: "Programador Senior", isDefault: true },
+        { id: -6, name: "Enrique Santos", dailySalary: 60.00, workedDays: 5.5, dailyHours: 8, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "3-10", puesto: "Programador Senior", isDefault: true },
+        { id: -7, name: "Feferico Diaz", dailySalary: 53.33, workedDays: 5.5, dailyHours: 8, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "1-3", puesto: "Programador Junior", isDefault: true },
+        { id: -8, name: "Cristian Martel", dailySalary: 53.33, workedDays: 5, dailyHours: 8, efficiency: 75, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "3-10", puesto: "Programador Junior", isDefault: true },
+        { id: -9, name: "Gabriela Perez", dailySalary: 53.33, workedDays: 5.5, dailyHours: 8, efficiency: 60, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "1-3", puesto: "Programador Junior", isDefault: true },
+        { id: -10, name: "Noelia Monge", dailySalary: 53.33, workedDays: 5.5, dailyHours: 8, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "10+", puesto: "Programador Junior", isDefault: true },
+        { id: -11, name: "Carlos Orellana", dailySalary: 53.33, workedDays: 5, dailyHours: 7, efficiency: 75, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "1-3", puesto: "Programador Junior", isDefault: true },
+        { id: -12, name: "Alex Carrillo", dailySalary: 53.33, workedDays: 5.5, dailyHours: 7, efficiency: 60, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "3-10", puesto: "Programador Junior", isDefault: true },
+        { id: -13, name: "Noel Perez", dailySalary: 53.33, workedDays: 5.5, dailyHours: 8, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "10+", puesto: "Programador Junior", isDefault: true },
+        { id: -14, name: "Alexis Enriquez", dailySalary: 53.33, workedDays: 5, dailyHours: 7, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "3-10", puesto: "Programador Junior", isDefault: true },
+        { id: -15, name: "Mario Mongue", dailySalary: 53.33, workedDays: 5.5, dailyHours: 8, efficiency: 75, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "3-10", puesto: "Programador Junior", isDefault: true },
+        { id: -16, name: "Andrea Aguirre", dailySalary: 53.33, workedDays: 5.5, dailyHours: 8, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "1-3", puesto: "Programador Junior", isDefault: true },
+        { id: -17, name: "Andres Boris", dailySalary: 53.33, workedDays: 4, dailyHours: 7, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "3-10", puesto: "Tester / QA", isDefault: true },
+        { id: -18, name: "Jeniffer Castillo", dailySalary: 53.33, workedDays: 3, dailyHours: 8, efficiency: 80, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "10+", puesto: "Tester / QA", isDefault: true },
+        { id: -19, name: "Felix Urrea", dailySalary: 53.33, workedDays: 5.5, dailyHours: 7, efficiency: 75, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "1-3", puesto: "Diseñadores UX/UI", isDefault: true },
+        { id: -20, name: "Luis Ramirez", dailySalary: 53.33, workedDays: 5, dailyHours: 7, efficiency: 60, afpType: "afiliado", salaryBase: "cancelado", yearsCompany: "10+", puesto: "Diseñadores UX/UI", isDefault: true }
+    ];
+    
+    // Elementos del DOM (Sección 1)
+    const addEmployeeBtn = document.getElementById('add-employee-btn');
+    const clearFormBtn = document.getElementById('clear-form-btn');
+    const employeePositionInput = document.getElementById('employee-position');
+    const dailySalaryInput = document.getElementById('daily-salary');
+
+    // Elementos del DOM (Sección 2 - CAMBIO)
+    const teamCheckboxList = document.getElementById('team-checkbox-list'); // CAMBIO
+    const selectAllTeamBtn = document.getElementById('select-all-team-btn');
+    const deselectAllTeamBtn = document.getElementById('deselect-all-team-btn');
+    const calculateTeamBtn = document.getElementById('calculate-team-btn');
+    
+    // Elementos del DOM (Sección 3 y 4)
+    const calculationsList = document.getElementById('calculations-list');
+    const calculateAllBtn = document.getElementById('calculate-all-btn'); 
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    
+    
+    // --- LÓGICA DE INICIALIZACIÓN ---
+    
+    function initializeDefaultEmployees() {
+        employees = [...defaultEmployees];
+        updateTeamCheckboxList(); // CAMBIO: Llama a la nueva función de checkboxes
+    }
+    
+    // --- LÓGICA DE SECCIÓN 1 (Agregar Empleado) ---
+    
+    function addEmployee() {
+        const name = document.getElementById('employee-name').value.trim();
+        const position = employeePositionInput.value; 
+        const dailySalary = parseFloat(dailySalaryInput.value) || 0;
+        const workedDays = parseFloat(document.getElementById('worked-days').value) || 0;
+        const dailyHours = parseInt(document.getElementById('daily-hours').value) || 8;
+        const efficiency = parseInt(document.getElementById('efficiency').value) || 100;
+        const afpType = document.getElementById('afp-type').value;
+        const salaryBase = document.getElementById('salary-base').value;
+        const yearsCompany = document.getElementById('years-company').value;
+        
+        if (!name || !position || dailySalary <= 0) {
+            alert('Por favor complete el nombre, puesto y salario (>0) del empleado.');
+            return;
+        }
+        
+        const employee = {
+            id: Date.now(), 
+            name,
+            puesto: position,
+            dailySalary,
+            workedDays,
+            dailyHours,
+            efficiency,
+            afpType,
+            salaryBase,
+            yearsCompany,
+            isDefault: false
+        };
+        
+        employees.push(employee); 
+        updateTeamCheckboxList(); // CAMBIO: Actualiza la lista de checkboxes
+        clearForm();
+    }
+
+    function clearForm() {
+        document.getElementById('employee-name').value = '';
+        employeePositionInput.value = ''; 
+        dailySalaryInput.value = '0'; 
+        dailySalaryInput.setAttribute('readonly', true); 
+        document.getElementById('worked-days').value = '0';
+        document.getElementById('daily-hours').value = '8';
+        document.getElementById('efficiency').value = '100';
+        document.getElementById('afp-type').value = 'afiliado';
+        document.getElementById('salary-base').value = 'nominal';
+        document.getElementById('years-company').value = '1-3';
+    }
+
+    function updateSalaryFromPosition() {
+        const selectedOption = employeePositionInput.options[employeePositionInput.selectedIndex];
+        const salary = selectedOption.getAttribute('data-salary');
+        const positionValue = selectedOption.value;
+
+        dailySalaryInput.value = parseFloat(salary).toFixed(2);
+
+        if (positionValue === 'Otros') {
+            dailySalaryInput.removeAttribute('readonly');
+            dailySalaryInput.focus();
+        } else {
+            dailySalaryInput.setAttribute('readonly', true);
+        }
+    }
+
+    // --- LÓGICA DE SECCIÓN 2 (Armar Equipo) ---
+
+    // CAMBIO: NUEVA FUNCIÓN para poblar la lista de Checkboxes
+    function updateTeamCheckboxList() {
+        teamCheckboxList.innerHTML = ''; // Limpiar lista
+        
+        employees.forEach(employee => {
+            // Crear el HTML para un form-check de Bootstrap
+            const checkDiv = document.createElement('div');
+            checkDiv.className = 'form-check';
+            checkDiv.innerHTML = `
+                <input class="form-check-input employee-team-checkbox" type="checkbox" value="${employee.id}" id="emp-check-${employee.id}">
+                <label class="form-check-label" for="emp-check-${employee.id}">
+                    ${employee.name} (${employee.puesto})
+                </label>
+            `;
+            teamCheckboxList.appendChild(checkDiv);
+        });
+    }
+
+    // CAMBIO: NUEVA FUNCIÓN para el botón "Seleccionar Todos"
+    function selectAllTeamMembers(event) {
+        event.preventDefault(); 
+        const checkboxes = document.querySelectorAll('.employee-team-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    // CAMBIO: NUEVA FUNCIÓN para el botón "Deseleccionar Todos"
+    function deselectAllTeamMembers(event) {
+        event.preventDefault();
+        const checkboxes = document.querySelectorAll('.employee-team-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    // --- LÓGICA DE SECCIÓN 3 y 4 (Cálculos) ---
+
+    // CAMBIO: Función de cálculo actualizada para leer checkboxes
+    function calculateSelectedTeam() {
+        calculationsList.innerHTML = '';
+        
+        // 1. Obtener IDs seleccionados de los checkboxes
+        const selectedCheckboxes = document.querySelectorAll('.employee-team-checkbox:checked');
+        const selectedIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+
+        // 2. Filtrar el array 'employees' (master list)
+        const selectedEmployees = employees.filter(emp => selectedIds.includes(String(emp.id)));
+        
+        // 3. Calcular costos solo para esos empleados
+        selectedEmployees.forEach(employee => {
+            const calculations = calculateEmployeeCosts(employee);
+            displayEmployeeCalculation(employee, calculations);
+        });
+        
+        // 4. Actualizar totales
+        updateTotals();
+    }
+    
+    // Función para calcular los costos de UN empleado (sin cambios)
+    function calculateEmployeeCosts(employee) {
+        const septimoDia = employee.dailySalary * 7;
+        const vacaciones = ((employee.dailySalary * 15) * 1.30) / 52;
+        let aguinaldo;
+        switch(employee.yearsCompany) {
+            case '1-3': aguinaldo = (employee.dailySalary * 15) / 52; break;
+            case '3-10': aguinaldo = (employee.dailySalary * 19) / 52; break;
+            case '10+': aguinaldo = (employee.dailySalary * 21) / 52; break;
+            default: aguinaldo = 0;
+        }
+        let baseSalarial;
+        if (employee.salaryBase === 'nominal') {
+            baseSalarial = septimoDia;
+        } else {
+            baseSalarial = septimoDia + vacaciones + aguinaldo;
+        }
+        const isss = baseSalarial * 0.075;
+        let afpPercentage;
+        if (employee.afpType === 'afiliado') {
+            afpPercentage = 0.0725;
+        } else {
+            afpPercentage = 0.0875;
+        }
+        const afp = baseSalarial * afpPercentage;
+        const costoReal = septimoDia + vacaciones + aguinaldo + isss + afp;
+        
+        return { septimoDia, vacaciones, aguinaldo, isss, afp, costoReal };
+    }
+    
+    // Función para mostrar el cálculo de un empleado (sin cambios)
+    function displayEmployeeCalculation(employee, calculations) {
+        let existingRow = document.querySelector(`tr[data-employee-id="${employee.id}"]`);
+        
+        if (existingRow) {
+            existingRow.innerHTML = `
+                <td>${employee.name}</td>
+                <td>$${calculations.septimoDia.toFixed(2)}</td>
+                <td>$${calculations.vacaciones.toFixed(2)}</td>
+                <td>$${calculations.aguinaldo.toFixed(2)}</td>
+                <td>$${calculations.isss.toFixed(2)}</td>
+                <td>$${calculations.afp.toFixed(2)}</td>
+                <td>$${calculations.costoReal.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="removeCalculation(${employee.id})">Eliminar</button>
+                </td>
+            `;
+        } else {
+            const row = document.createElement('tr');
+            row.setAttribute('data-employee-id', employee.id);
+            row.innerHTML = `
+                <td>${employee.name}</td>
+                <td>$${calculations.septimoDia.toFixed(2)}</td>
+                <td>$${calculations.vacaciones.toFixed(2)}</td>
+                <td>$${calculations.aguinaldo.toFixed(2)}</td>
+                <td>$${calculations.isss.toFixed(2)}</td>
+                <td>$${calculations.afp.toFixed(2)}</td>
+                <td>$${calculations.costoReal.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="removeCalculation(${employee.id})">Eliminar</button>
+                </td>
+            `;
+            calculationsList.appendChild(row);
+        }
+    }
+    
+    // Función para eliminar un cálculo (botón en Sección 3) (sin cambios)
+    function removeCalculation(employeeId) {
+        const calculationRow = document.querySelector(`tr[data-employee-id="${employeeId}"]`);
+        if (calculationRow) {
+            calculationRow.remove();
+            updateTotals();
+        }
+    }
+    
+    // Función para actualizar los totales (sin cambios)
+    function updateTotals() {
+        let totalSeptimo = 0, totalVacaciones = 0, totalAguinaldo = 0, totalIsss = 0, totalAfp = 0, totalCosto = 0;
+        
+        const calculationRows = document.querySelectorAll('#calculations-list tr');
+        calculationRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 7) {
+                totalSeptimo += parseFloat(cells[1].textContent.replace('$', ''));
+                totalVacaciones += parseFloat(cells[2].textContent.replace('$', ''));
+                totalAguinaldo += parseFloat(cells[3].textContent.replace('$', ''));
+                totalIsss += parseFloat(cells[4].textContent.replace('$', ''));
+                totalAfp += parseFloat(cells[5].textContent.replace('$', ''));
+                totalCosto += parseFloat(cells[6].textContent.replace('$', ''));
+            }
+        });
+        
+        document.getElementById('total-septimo').textContent = `$${totalSeptimo.toFixed(2)}`;
+        document.getElementById('total-vacaciones').textContent = `$${totalVacaciones.toFixed(2)}`;
+        document.getElementById('total-aguinaldo').textContent = `$${totalAguinaldo.toFixed(2)}`;
+        document.getElementById('total-isss').textContent = `$${totalIsss.toFixed(2)}`;
+        document.getElementById('total-afp').textContent = `$${totalAfp.toFixed(2)}`;
+        document.getElementById('total-costo').textContent = `$${totalCosto.toFixed(2)}`;
+    }
+    
+    // --- LÓGICA DE BOTONES GLOBALES ---
+    
+    // CAMBIO: Función para limpiar solo los empleados agregados por el usuario
+    function clearUserEmployees() {
+        employees = employees.filter(emp => emp.isDefault); 
+        updateTeamCheckboxList(); // CAMBIO: Actualiza la lista de checkboxes
+        calculationsList.innerHTML = ''; 
+        clearForm();
+        updateTotals();
+    }
+    
+    // --- EVENT LISTENERS ---
+    
+    // Sección 1
+    addEmployeeBtn.addEventListener('click', addEmployee);
+    clearFormBtn.addEventListener('click', clearForm);
+    employeePositionInput.addEventListener('change', updateSalaryFromPosition);
+    
+    // Sección 2 (CAMBIO)
+    selectAllTeamBtn.addEventListener('click', selectAllTeamMembers);
+    deselectAllTeamBtn.addEventListener('click', deselectAllTeamMembers);
+    calculateTeamBtn.addEventListener('click', calculateSelectedTeam); 
+
+    // Globales
+    calculateAllBtn.addEventListener('click', calculateSelectedTeam); 
+    clearAllBtn.addEventListener('click', clearUserEmployees);
+    
+    // Permitir agregar empleado con Enter (sin cambios)
+    document.getElementById('employee-name').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addEmployee();
+        }
+    });
+    
+    // Inicializar empleados predeterminados al cargar la página
+    initializeDefaultEmployees();
+</script>
+{% endblock %}
