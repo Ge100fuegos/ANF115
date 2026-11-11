@@ -1,0 +1,302 @@
+/* =========================================
+   Login minimalista
+   Formulario a la izquierda, logo a la derecha
+   ========================================= */
+
+/* ---------- Variables ---------- */
+:root {
+    --color-fondo: #f6f7f9;
+    --color-panel: #ffffff;
+    --color-texto: #1f2937;
+    --color-texto-suave: #6b7280;
+    --color-borde: #e5e7eb;
+    --color-acento: #1f2a44;
+    --color-acento-hover: #34405e;
+    --color-error-fondo: #fdecec;
+    --color-error-texto: #b42318;
+    --radio: 10px;
+    --fuente: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+}
+
+body {
+    font-family: var(--fuente);
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Contenedor principal ---------- */
+/* El logo va primero en el HTML; row-reverse lo manda a la derecha */
+.principal-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: row-reverse;
+    min-height: 100vh;
+}
+
+/* ---------- Lado derecho: logo ---------- */
+.conteiner-logo-login {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 3rem 2rem;
+    border-left: 1px solid var(--color-borde);
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(2px);
+}
+
+.conteiner-logo-login img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radio);
+}
+
+.conteiner-logo-login h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-texto-suave);
+}
+
+/* ---------- Lado izquierdo: formulario ---------- */
+.form-container-login {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+}
+
+.login-container-login {
+    width: 100%;
+    max-width: 380px;
+    padding: 2.5rem 2.25rem;
+    background-color: var(--color-panel);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio);
+    box-shadow: 0 10px 30px rgba(17, 24, 39, 0.05);
+}
+
+.login-container-login h2 {
+    margin: 0 0 2rem;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--color-texto);
+}
+
+/* ---------- Campos ---------- */
+.form-group-login {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.form-group-login label {
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-texto-suave);
+}
+
+.form-group-login input {
+    width: 100%;
+    padding: 0.7rem 0.1rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--color-texto);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--color-borde);
+    border-radius: 0;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.form-group-login input::placeholder {
+    color: #b0b5bd;
+}
+
+.form-group-login input:focus {
+    border-bottom-color: var(--color-acento);
+}
+
+/* ---------- Botón ---------- */
+.btn-login {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.85rem 1rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    color: #ffffff;
+    background-color: var(--color-acento);
+    border: none;
+    border-radius: var(--radio);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-login:hover {
+    background-color: var(--color-acento-hover);
+}
+
+.btn-login:active {
+    transform: scale(0.99);
+}
+
+.btn-login:focus-visible {
+    outline: 2px solid var(--color-acento);
+    outline-offset: 3px;
+}
+
+/* ---------- Divisor y enlace ---------- */
+.divider-login {
+    height: 1px;
+    margin: 1.75rem 0 1.25rem;
+    background-color: var(--color-borde);
+}
+
+.forgot-password-login {
+    text-align: center;
+}
+
+.forgot-password-login a {
+    font-size: 0.85rem;
+    color: var(--color-texto-suave);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.forgot-password-login a:hover {
+    color: var(--color-acento);
+    text-decoration: underline;
+}
+
+/* ---------- Mensaje de error ---------- */
+.alert.alert-danger {
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    color: var(--color-error-texto);
+    background-color: var(--color-error-fondo);
+    border-left: 3px solid var(--color-error-texto);
+    border-radius: 6px;
+}
+
+/* =========================================
+   Fondo animado: círculos flotantes
+   ========================================= */
+.area-login {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.circles-login {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.circles-login li {
+    position: absolute;
+    bottom: -150px;
+    display: block;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(31, 42, 68, 0.06);
+    border-radius: 50%;
+    animation: subir-circulos 25s linear infinite;
+}
+
+.circles-login li:nth-child(1)  { left: 25%; width: 80px;  height: 80px;  animation-delay: 0s; }
+.circles-login li:nth-child(2)  { left: 10%; width: 20px;  height: 20px;  animation-delay: 2s;  animation-duration: 12s; }
+.circles-login li:nth-child(3)  { left: 70%; width: 20px;  height: 20px;  animation-delay: 4s; }
+.circles-login li:nth-child(4)  { left: 40%; width: 60px;  height: 60px;  animation-delay: 0s;  animation-duration: 18s; }
+.circles-login li:nth-child(5)  { left: 65%; width: 20px;  height: 20px;  animation-delay: 0s; }
+.circles-login li:nth-child(6)  { left: 75%; width: 110px; height: 110px; animation-delay: 3s; }
+.circles-login li:nth-child(7)  { left: 35%; width: 150px; height: 150px; animation-delay: 7s; }
+.circles-login li:nth-child(8)  { left: 50%; width: 25px;  height: 25px;  animation-delay: 15s; animation-duration: 45s; }
+.circles-login li:nth-child(9)  { left: 20%; width: 15px;  height: 15px;  animation-delay: 2s;  animation-duration: 35s; }
+.circles-login li:nth-child(10) { left: 85%; width: 150px; height: 150px; animation-delay: 0s;  animation-duration: 11s; }
+
+@keyframes subir-circulos {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-1000px) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* Respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .circles-login li {
+        animation: none;
+        display: none;
+    }
+}
+
+/* =========================================
+   Responsive: en pantallas pequeñas se apila
+   (logo arriba, formulario abajo)
+   ========================================= */
+@media (max-width: 768px) {
+    .principal-container {
+        flex-direction: column;
+    }
+
+    .conteiner-logo-login {
+        flex: none;
+        padding: 2.5rem 1rem 1rem;
+        border-left: none;
+        background-color: transparent;
+        backdrop-filter: none;
+    }
+
+    .conteiner-logo-login img {
+        width: 160px;
+    }
+
+    .conteiner-logo-login h2 {
+        font-size: 1.05rem;
+    }
+
+    .form-container-login {
+        align-items: flex-start;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .login-container-login {
+        padding: 2rem 1.5rem;
+    }
+}
