@@ -1,0 +1,55 @@
+<section class="cuenta-t tipo-{{ resumen.cuenta.tipo|lower }} mb-4" data-cuenta="{{ resumen.cuenta.codigo }}">
+    <div class="cuenta-t-header d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0">
+            <span class="text-muted me-2">{{ resumen.cuenta.codigo }}</span>{{ resumen.cuenta.nombre }}
+        </h2>
+        <span class="tipo-badge">{{ resumen.cuenta.tipo|title }}</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 80px">No.</th>
+                    <th style="width: 110px">Fecha</th>
+                    <th>Descripción</th>
+                    <th class="text-end" style="width: 140px">Debe</th>
+                    <th class="text-end" style="width: 140px">Haber</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trans in transacciones %}
+                {% if trans.cuenta.id == resumen.cuenta.id %}
+                <tr>
+                    <td class="text-muted">{{ trans.numero_transaccion }}</td>
+                    <td>{{ trans.fecha|date:"d/m/Y" }}</td>
+                    <td>{{ trans.descripcion }}</td>
+                    <td class="text-end col-monto">
+                        {% if trans.debe > 0 %}$ {{ trans.debe|floatformat:2 }}{% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td class="text-end col-monto">
+                        {% if trans.haber > 0 %}$ {{ trans.haber|floatformat:2 }}{% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="fila-total">
+                    <td colspan="3" class="text-end text-muted">Totales</td>
+                    <td class="text-end col-monto">$ {{ resumen.total_debe|floatformat:2 }}</td>
+                    <td class="text-end col-monto">$ {{ resumen.total_haber|floatformat:2 }}</td>
+                </tr>
+                <tr class="fila-saldo">
+                    <td colspan="3" class="text-end">Saldo final ({{ resumen.naturaleza_saldo|lower }})</td>
+                    <td class="text-end col-monto">
+                        {% if resumen.naturaleza_saldo == 'DEBE' %}$ {{ resumen.saldo_final|floatformat:2 }}{% endif %}
+                    </td>
+                    <td class="text-end col-monto">
+                        {% if resumen.naturaleza_saldo == 'HABER' %}$ {{ resumen.saldo_final|floatformat:2 }}{% endif %}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ serie.nombre }} - Pronósticos</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f9; color: #222; }
+    .contenedor { max-width: 1100px; margin: 30px auto; background: #fff; padding: 24px 30px;
+                  border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    h1 { margin-top: 0; }
+    h2 { margin-top: 30px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+    table { border-collapse: collapse; margin-bottom: 10px; }
+    th, td { padding: 8px 12px; border: 1px solid #e5e7eb; text-align: right; }
+    th { background: #f9fafb; }
+    td:first-child, th:first-child { text-align: left; }
+    .scroll { max-height: 320px; overflow-y: auto; display: inline-block; }
+    form p { margin: 0 0 12px; }
+    form ul { list-style: none; padding: 0; margin: 4px 0; }
+    label { font-weight: bold; }
+    .errorlist { color: #dc2626; }
+    .btn { display: inline-block; padding: 8px 14px; border-radius: 6px; text-decoration: none;
+           border: none; cursor: pointer; font-size: 14px; }
+    .btn-primario { background: #2563eb; color: #fff; }
+    .btn-gris { background: #6b7280; color: #fff; }
+    .mejor { background: #dcfce7; color: #166534; padding: 10px 14px; border-radius: 6px; }
+    .mensaje { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; background: #dcfce7; color: #166534; }
+  </style>
+</head>
+<body>
+  <div class="contenedor">
+
+    {% if messages %}
+      {% for m in messages %}<div class="mensaje">{{ m }}</div>{% endfor %}
+    {% endif %}
+
+    <h1>{{ serie.nombre }}</h1>
+    {% if serie.descripcion %}<p>{{ serie.descripcion }}</p>{% endif %}
+
+    <h2>Datos históricos</h2>
+    <div class="scroll">
+      <table>
+        <tr><th>Período</th><th>Valor</th></tr>
+        {% for h in historicos %}
+        <tr><td>{{ h.etiqueta }}</td><td>{{ h.valor|floatformat:"2g" }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <h2>Generar pronóstico</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primario">Calcular</button>
+    </form>
+
+    {% if pronosticos %}
+    <h2>Resultados</h2>
+    <table>
+      <tr>
+        <th>Período</th>
+        {% for p in pronosticos %}<th style="color: {{ p.color }}">{{ p.nombre_metodo }}</th>{% endfor %}
+      </tr>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.etiqueta }}</td>
+        {% for v in f.valores %}
+          <td>{% if v is not None %}{{ v|floatformat:"2g" }}{% else %}—{% endif %}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+      <tr>
+        <th>MAD</th>
+        {% for p in pronosticos %}<td>{% if p.mad is not None %}{{ p.mad|floatformat:"2g" }}{% else %}—{% endif %}</td>{% endfor %}
+      </tr>
+      <tr>
+        <th>MAPE</th>
+        {% for p in pronosticos %}<td>{% if p.mape is not None %}{{ p.mape|floatformat:2 }} %{% else %}—{% endif %}</td>{% endfor %}
+      </tr>
+    </table>
+
+    <h3>Parámetros</h3>
+    {% for p in pronosticos %}
+    <p><strong>{{ p.nombre_metodo }}:</strong>
+      {% for k, v in p.parametros.items %}{{ k }} = {{ v }}{% if not forloop.last %}; {% endif %}{% endfor %}
+    </p>
+    {% endfor %}
+
+    {% if mejor %}
+    <p class="mejor"><strong>Mejor ajuste:</strong> {{ mejor.nombre_metodo }}
+      (menor MAPE: {{ mejor.mape|floatformat:2 }} %)</p>
+    {% endif %}
+
+    <h2>Gráfica</h2>
+    <canvas id="grafica" height="120"></canvas>
+    {{ grafica|json_script:"datos-grafica" }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const g = JSON.parse(document.getElementById("datos-grafica").textContent);
+      new Chart(document.getElementById("grafica"), {
+        type: "line",
+        data: {
+          labels: g.labels,
+          datasets: g.datasets.map(d => ({
+            label: d.label,
+            data: d.data,
+            borderColor: d.color,
+            backgroundColor: d.color,
+            borderWidth: d.label === "Histórico" ? 3 : 2,
+            borderDash: d.label === "Histórico" ? [] : [6, 4],
+            pointRadius: 2,
+            tension: 0,
+          })),
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: "index", intersect: false },
+          plugins: { title: { display: true, text: g.titulo } },
+          scales: { y: { ticks: { callback: v => v.toLocaleString("es-SV") } } },
+        },
+      });
+    </script>
+    {% endif %}
+
+    <p style="margin-top: 30px;">
+      <a class="btn btn-gris" href="{% url 'pronostico_lista' %}">← Volver a la lista</a>
+    </p>
+  </div>
+</body>
+</html>
+
+{% endblock %}

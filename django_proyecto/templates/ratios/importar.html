@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "ratios/_estilos.html" %}
+<div class="r-caja" style="max-width:700px">
+  <h1>Importar Excel — {{ analisis.empresa }}</h1>
+  <ol>
+    <li><a href="{% url 'ratios_plantilla' analisis.pk %}">Descarga la plantilla</a>.</li>
+    <li>Escribe los años en la fila 1 (desde la columna C) y llena los montos.</li>
+    <li>Súbela aquí. Si un año ya existe, se reemplaza.</li>
+  </ol>
+  <form method="post" enctype="multipart/form-data" class="r-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="r-btn r-verde">Importar</button>
+    <a class="r-btn r-gris" href="{% url 'ratios_detalle' analisis.pk %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

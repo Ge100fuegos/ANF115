@@ -1,0 +1,15 @@
+<tr class="fila-nivel-{{ nivel }}" data-tipo="{{ cuenta.tipo|lower }}" data-nivel="{{ nivel }}">
+    <td class="font-monospace {% if nivel == 2 %}fw-semibold{% endif %}">{{ cuenta.codigo }}</td>
+    <td class="nombre-cuenta">{{ cuenta.nombre }}</td>
+    <td class="text-center"><span class="etiqueta-nivel">{{ etiqueta_nivel }}</span></td>
+    <td class="text-center">
+        <span class="etiqueta-tipo tipo-{{ cuenta.tipo|lower }}">{{ cuenta.get_tipo_display }}</span>
+    </td>
+    <td class="text-center">
+        {% if cuenta.tipo == 'ACTIVO' or cuenta.tipo == 'GASTO' %}
+        <span class="naturaleza deudora">Deudora</span>
+        {% else %}
+        <span class="naturaleza acreedora">Acreedora</span>
+        {% endif %}
+    </td>
+</tr>

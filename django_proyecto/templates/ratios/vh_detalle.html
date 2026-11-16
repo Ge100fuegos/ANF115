@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "ratios/_estilos.html" %}
+<div class="r-caja" style="max-width:1300px">
+  {% for m in messages %}<div class="r-msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+
+  <h1>Análisis vertical y horizontal — {{ analisis.empresa }}</h1>
+
+  <div class="r-acciones">
+    <a class="r-btn r-verde" href="{% url 'vh_cargar' analisis.pk %}?estado=BG">Cargar Balance General</a>
+    <a class="r-btn r-verde" href="{% url 'vh_cargar' analisis.pk %}?estado=ER">Cargar Estado de Resultados</a>
+    <a class="r-btn r-gris" href="{% url 'ratios_detalle' analisis.pk %}">← Volver a ratios</a>
+  </div>
+
+  <div class="r-nota">
+    <strong>Vertical:</strong> cada cuenta como porcentaje de la base del mismo año (Activo total o Ventas netas = 100 %).<br>
+    <strong>Horizontal:</strong> cuánto cambió cada cuenta de un año al siguiente, en dólares y en porcentaje.
+  </div>
+
+  {% if not estados %}
+    <p>Todavía no hay estados cargados. Usa los botones de arriba.</p>
+  {% endif %}
+
+  {% for e in estados %}
+  <h2>{{ e.nombre }}</h2>
+
+  <div class="r-acciones" style="align-items:center">
+    <form method="post" action="{% url 'vh_cambiar_base' analisis.pk e.codigo %}">
+      {% csrf_token %}
+      <label style="font-weight:bold">Base del vertical (100 %):</label>
+      <select name="linea" onchange="this.form.submit()">
+        {% for id, nombre in e.opciones_base %}
+        <option value="{{ id }}" {% if id == e.base_id %}selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a class="r-btn r-verde" href="{% url 'vh_cargar' analisis.pk %}?estado={{ e.codigo }}">Volver a cargar</a>
+    <form method="post" action="{% url 'vh_eliminar' analisis.pk e.codigo %}"
+          onsubmit="return confirm('¿Eliminar el {{ e.nombre }}?')">
+      {% csrf_token %}<button class="r-btn r-rojo">Eliminar</button>
+    </form>
+  </div>
+
+  <div class="r-scroll">
+  <table class="r-tabla">
+    <tr>
+      <th rowspan="2" style="text-align:left">Cuenta</th>
+      {% for a in e.anios %}<th colspan="2">{{ a }}</th>{% endfor %}
+      {% for p in e.pares %}<th colspan="2">Horizontal {{ p }}</th>{% endfor %}
+    </tr>
+    <tr>
+      {% for a in e.anios %}<th>Monto</th><th>Vertical</th>{% endfor %}
+      {% for p in e.pares %}<th>Var. $</th><th>Var. %</th>{% endfor %}
+    </tr>
+
+    {% for f in e.filas %}
+      {% if f.es_titulo %}
+      <tr><td colspan="{{ e.total_columnas }}" class="r-titulo">{{ f.nombre }}</td></tr>
+      {% else %}
+      <tr{% if f.es_base %} class="r-base"{% endif %}>
+        <td>{{ f.nombre }}</td>
+        {% for c in f.columnas %}
+          <td class="num">{{ c.valor|floatformat:"2g" }}</td>
+          <td class="num">{% if c.vertical is None %}—{% else %}{{ c.vertical|floatformat:2 }} %{% endif %}</td>
+        {% endfor %}
+        {% for v in f.variaciones %}
+          <td class="num {% if v.absoluta > 0 %}r-sube{% elif v.absoluta < 0 %}r-baja{% endif %}">
+            {{ v.absoluta|floatformat:"2g" }}
+          </td>
+          <td class="num {% if v.absoluta > 0 %}r-sube{% elif v.absoluta < 0 %}r-baja{% endif %}">
+            {% if v.relativa is None %}—{% else %}{{ v.relativa|floatformat:2 }} %{% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
+  </div>
+  <p style="font-size:13px;color:#6b7280">
+    Verde = aumentó, rojo = disminuyó. En cuentas de costos y gastos, un aumento no es favorable.
+  </p>
+  {% endfor %}
+</div>
+{% endblock %}

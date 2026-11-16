@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Pronósticos</h1>
+<p>
+  <a href="{% url 'pronostico_crear_manual' %}">+ Nueva serie (manual)</a> |
+<a href="{% url 'pronostico_importar' %}">+ Importar desde Excel</a>
+</p>
+<table>
+  <tr><th>Serie</th><th>Datos</th><th>Frecuencia</th><th></th></tr>
+  {% for s in series %}
+  <tr>
+    <td><a href="{% url 'pronosticos_detalle' s.pk %}">{{ s.nombre }}</a></td>
+    <td>{{ s.num_datos }}</td>
+    <td>{{ s.get_frecuencia_display }}</td>
+    <td>
+      <form method="post" action="{% url 'pronostico_eliminar' s.pk %}"
+            onsubmit="return confirm('¿Eliminar esta serie?')">
+        {% csrf_token %}<button type="submit">Eliminar</button>
+      </form>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="4">Todavía no hay series.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

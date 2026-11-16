@@ -1,0 +1,24 @@
+<div class="filtros row g-2 align-items-end mb-4">
+    <div class="col-md-4">
+        <label for="selectCuenta" class="form-label small text-muted mb-1">Cuenta</label>
+        <select class="form-select form-select-sm" id="selectCuenta">
+            <option value="todas">Todas las cuentas</option>
+            {% for cuenta in cuentas %}
+            <option value="{{ cuenta.codigo }}">{{ cuenta.codigo }} - {{ cuenta.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="fechaDesde" class="form-label small text-muted mb-1">Desde</label>
+        <input type="date" class="form-control form-control-sm" id="fechaDesde">
+    </div>
+    <div class="col-md-3">
+        <label for="fechaHasta" class="form-label small text-muted mb-1">Hasta</label>
+        <input type="date" class="form-control form-control-sm" id="fechaHasta">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-outline-secondary btn-sm w-100" id="btnFiltrar">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+        </button>
+    </div>
+</div>

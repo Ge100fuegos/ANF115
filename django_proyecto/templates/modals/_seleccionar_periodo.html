@@ -1,0 +1,26 @@
+<div class="modal fade modal-minimal" id="seleccionarPeriodoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Seleccionar periodo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group list-group-flush">
+                    {% for periodo in periodos %}
+                    <a href="{% url 'libro_mayor' %}?periodo_id={{ periodo.id }}"
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Periodo {{ periodo.año }}</div>
+                            <small class="text-muted">{{ periodo.fecha_inicio|date:"d/m/Y" }} – {{ periodo.fecha_fin|date:"d/m/Y" }}</small>
+                        </div>
+                        <span class="estado {% if periodo.estado == 'ACTIVO' %}estado-activo{% endif %}">
+                            {{ periodo.estado|title }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

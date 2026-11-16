@@ -1,0 +1,141 @@
+{% with url_actual=request.resolver_match.url_name %}
+
+<aside class="offcanvas-lg offcanvas-start sidebar text-white" tabindex="-1" id="sidebarMenu"
+       aria-labelledby="sidebarMenuLabel">
+    <div class="offcanvas-header border-bottom border-secondary">
+        <h5 class="offcanvas-title fw-bold" id="sidebarMenuLabel">Menú</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                data-bs-target="#sidebarMenu" aria-label="Cerrar"></button>
+    </div>
+
+    <div class="offcanvas-body d-flex flex-column p-0">
+        <ul class="nav flex-column py-3 flex-grow-1">
+            <li class="nav-item">
+                <a href="{% url 'menu_conta' %}"
+                   class="nav-link sidebar-link {% if url_actual == 'menu_conta' %}active{% endif %}">
+                    <i class="bi bi-house-door me-2"></i> Inicio
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'libro_mayor' %}"
+                   class="nav-link sidebar-link {% if url_actual == 'libro_mayor' %}active{% endif %}">
+                    <i class="bi bi-journal-text me-2"></i> Libro Mayor
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'catalogoCuentas' %}"
+                   class="nav-link sidebar-link {% if url_actual == 'catalogoCuentas' %}active{% endif %}">
+                    <i class="bi bi-list-ul me-2"></i> Catálogo de Cuentas
+                </a>
+            </li>
+
+            <!-- Estados Financieros (desplegable) -->
+            <li class="nav-item">
+                <button class="nav-link sidebar-link sidebar-toggle-sub collapsed w-100 text-start"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#submenuEstados"
+                        aria-expanded="false" aria-controls="submenuEstados">
+                    <i class="bi bi-bar-chart-line me-2"></i> Estados Financieros
+                    <i class="bi bi-chevron-down chevron ms-auto"></i>
+                </button>
+
+                <div class="collapse sidebar-submenu" id="submenuEstados">
+                    <ul class="nav flex-column">
+                        
+                        <li>
+                            <a href="{% url 'balance_comprobacion' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'balance_comprobacion' %}active{% endif %}">
+                                Balance de Comprobación
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'estado_capital' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'estado_capital' %}active{% endif %}">
+                                Estado de Capital
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'balance_general' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'balance_general' %}active{% endif %}">
+                                Balance General
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'estado_resultados' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'estado_resultados' %}active{% endif %}">
+                                Estado de Resultados
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'ajustes_contables' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'ajustes_contables' %}active{% endif %}">
+                                Ajustes Contables
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link sidebar-link sidebar-toggle-sub collapsed w-100 text-start"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#submenuEstadosDos"
+                        aria-expanded="false" aria-controls="submenuEstadosDos">
+                    <i class="bi bi-stars me-2"></i> Gestión de Costos
+                    <i class="bi bi-chevron-down chevron ms-auto"></i>
+                </button>
+
+                <div class="collapse sidebar-submenuDos" id="submenuEstadosDos">
+                    <ul class="nav flex-column">
+                        
+                        <li>
+                            <a href="{% url 'ucp' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'ucp' %}active{% endif %}">
+                                Calculadora UCP
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'cmo' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'cmo' %}active{% endif %}">
+                                Calculador CMO
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'cif' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'cif' %}active{% endif %}">
+                                Calcular CIF
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'costo_total' %}"
+                               class="nav-link sidebar-sublink {% if url_actual == 'costo_total' %}active{% endif %}">
+                                Calcular Costo Total
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'ratios_lista' %}"
+                   class="nav-link sidebar-link {% if url_actual == 'ratios_lista' %}active{% endif %}">
+                    <i class=" bi bi-pie-chart me-2"></i> Ratios
+                </a>
+            </li>
+             <li class="nav-item">
+                <a href="{% url 'pronostico_lista' %}"
+                   class="nav-link sidebar-link {% if url_actual == 'pronostico_lista' %}active{% endif %}">
+                    <i class="bi bi-journal-text me-2"></i> Prónosticos
+                </a>
+            </li>
+             <li class="nav-item">
+                <a href="{% url 'pronostico_lista' %}"
+                   class="nav-link sidebar-link {% if url_actual == 'pronostico_lista' %}active{% endif %}">
+                    <i class="bi bi-journal-text me-2"></i> Análisis Vertical y Horizontal
+                </a>
+            </li>
+        </ul>
+        <div class="px-3 py-3 border-top border-secondary">
+            <small class="text-white-50 d-block">Usuario</small>
+            <span class="fw-bold"><i class="bi bi-person-circle me-1"></i> Contador</span>
+        </div>
+    </div>
+</aside>
+{% endwith %}

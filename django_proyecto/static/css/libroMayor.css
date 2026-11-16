@@ -1,0 +1,119 @@
+:root {
+    --lm-primario: #303a63;
+    --lm-borde: #e5e7eb;
+    --lm-fondo-suave: #f8f9fa;
+}
+
+/* Botón principal con el color del sistema */
+.btn-primario {
+    background-color: var(--lm-primario);
+    border-color: var(--lm-primario);
+    color: #fff;
+}
+.btn-primario:hover,
+.btn-primario:focus {
+    background-color: #252d4d;
+    border-color: #252d4d;
+    color: #fff;
+}
+
+/* Etiqueta de estado del periodo */
+.estado {
+    display: inline-block;
+    font-size: .72rem;
+    padding: .1rem .55rem;
+    margin-left: .4rem;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #6c757d;
+}
+.estado-activo {
+    background: #e6f4ea;
+    color: #1e7b34;
+}
+
+/* Filtros */
+.filtros {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--lm-borde);
+}
+
+/* Tarjetas de cuenta T */
+.cuenta-t {
+    --color-tipo: #adb5bd;
+    background: #fff;
+    border: 1px solid var(--lm-borde);
+    border-left: 3px solid var(--color-tipo);
+    border-radius: .5rem;
+    overflow: hidden;
+}
+.tipo-activo     { --color-tipo: #0d6efd; }
+.tipo-pasivo     { --color-tipo: #d39e00; }
+.tipo-patrimonio { --color-tipo: #0aa2c0; }
+.tipo-ingreso    { --color-tipo: #198754; }
+.tipo-gasto      { --color-tipo: #dc3545; }
+
+.cuenta-t-header {
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--lm-borde);
+}
+.tipo-badge {
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--color-tipo);
+}
+
+.cuenta-t .table th,
+.cuenta-t .table td {
+    padding: .55rem 1rem;
+}
+.cuenta-t .table thead th {
+    font-size: .72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #6c757d;
+    background: transparent;
+    border-bottom: 1px solid var(--lm-borde);
+}
+.col-monto {
+    font-variant-numeric: tabular-nums;
+}
+.fila-total td {
+    font-weight: 600;
+    border-top: 1px solid var(--lm-borde);
+}
+.fila-saldo td {
+    font-weight: 600;
+    background: var(--lm-fondo-suave);
+    border-bottom: 0;
+}
+
+/* Estado vacío */
+.estado-vacio {
+    border: 1px dashed var(--lm-borde);
+    border-radius: .5rem;
+}
+
+/* Modales sin bordes extra */
+.modal-minimal .modal-header {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+.modal-minimal .modal-footer {
+    border-top: 0;
+}
+.seccion-titulo {
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #6c757d;
+}
+.resumen-balance {
+    background: var(--lm-fondo-suave);
+    border-radius: .5rem;
+    padding: .75rem 1rem;
+}

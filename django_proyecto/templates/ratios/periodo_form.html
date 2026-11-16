@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "ratios/_estilos.html" %}
+<div class="r-caja">
+  <h1>{% if instancia %}Editar año {{ instancia.anio }}{% else %}Agregar año{% endif %} — {{ analisis.empresa }}</h1>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="r-form" style="max-width:200px">
+      <p>{{ form.anio.label_tag }} {{ form.anio }} {{ form.anio.errors }}</p>
+    </div>
+
+    {% for estado, campos in form.campos_por_estado %}
+    <fieldset>
+      <legend>{{ estado }}</legend>
+      <div class="r-grid">
+        {% for campo in campos %}
+        <div>{{ campo.label_tag }} {{ campo }} {{ campo.errors }}</div>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {% endfor %}
+
+    <p style="font-size:13px;color:#6b7280">
+      Costo de ventas y gastos financieros se guardan en positivo aunque los escribas negativos.
+    </p>
+    <button class="r-btn r-azul">Guardar</button>
+    <a class="r-btn r-gris" href="{% url 'ratios_detalle' analisis.pk %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

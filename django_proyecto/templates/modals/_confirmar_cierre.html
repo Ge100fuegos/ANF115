@@ -1,0 +1,37 @@
+<div class="modal fade modal-minimal" id="confirmarCierreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Finalizar período contable</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form method="post" action="{% url 'cerrar_periodo' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="mb-3">¿Está seguro de finalizar el período contable actual? <strong>Esta acción es irreversible.</strong></p>
+
+                    <ul class="small text-muted ps-3 mb-3">
+                        <li>No se podrán realizar más transacciones ni ajustes</li>
+                        <li>Se generará el Balance de Comprobación final</li>
+                        <li>Será redirigido automáticamente al Balance de Comprobación</li>
+                    </ul>
+
+                    {% if periodo_activo %}
+                    <div class="resumen-balance d-flex justify-content-between small">
+                        <span class="fw-semibold">Período {{ periodo_activo.año }}</span>
+                        <span class="text-muted">
+                            {{ periodo_activo.fecha_inicio|date:"d/m/Y" }} – {{ periodo_activo.fecha_fin|date:"d/m/Y" }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-lock me-1"></i>Finalizar período
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

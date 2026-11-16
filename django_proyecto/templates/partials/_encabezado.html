@@ -1,0 +1,35 @@
+<header class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="h4 fw-semibold mb-1">Libro Mayor</h1>
+        {% if periodo_seleccionado %}
+        <p class="text-muted small mb-0">
+            Periodo {{ periodo_seleccionado.año }} ·
+            {{ periodo_seleccionado.fecha_inicio|date:"d/m/Y" }} – {{ periodo_seleccionado.fecha_fin|date:"d/m/Y" }}
+            <span class="estado {% if periodo_seleccionado.estado == 'ACTIVO' %}estado-activo{% endif %}">
+                {{ periodo_seleccionado.estado|title }}
+            </span>
+        </p>
+        {% endif %}
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#seleccionarPeriodoModal">
+            <i class="bi bi-calendar3 me-1"></i>Periodo
+        </button>
+
+        {% if puede_crear_periodo %}
+        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoPeriodoModal">
+            <i class="bi bi-plus me-1"></i>Nuevo periodo
+        </button>
+        {% endif %}
+
+        {% if periodo_seleccionado and periodo_seleccionado.estado == 'ACTIVO' %}
+        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarCierreModal">
+            <i class="bi bi-lock me-1"></i>Finalizar período
+        </button>
+        <button class="btn btn-primario btn-sm" data-bs-toggle="modal" data-bs-target="#nuevaTransaccionModal">
+            <i class="bi bi-plus-lg me-1"></i>Nueva transacción
+        </button>
+        {% endif %}
+    </div>
+</header>

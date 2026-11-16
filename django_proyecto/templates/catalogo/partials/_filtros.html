@@ -1,0 +1,30 @@
+<div class="filtros row g-2 align-items-end mb-4">
+    <div class="col-md-4">
+        <label for="buscarCuenta" class="form-label small text-muted mb-1">Buscar</label>
+        <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="buscarCuenta" placeholder="Código o nombre...">
+        </div>
+    </div>
+    <div class="col-md-4">
+        <label for="filtroTipo" class="form-label small text-muted mb-1">Tipo</label>
+        <select class="form-select form-select-sm" id="filtroTipo">
+            <option value="">Todos los tipos</option>
+            <option value="activo">Activo</option>
+            <option value="pasivo">Pasivo</option>
+            <option value="patrimonio">Patrimonio</option>
+            <option value="ingreso">Ingresos</option>
+            <option value="gasto">Gastos</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label for="filtroNivel" class="form-label small text-muted mb-1">Nivel</label>
+        <select class="form-select form-select-sm" id="filtroNivel">
+            <option value="">Todos los niveles</option>
+            <option value="1">Nivel 1 - Grupo</option>
+            <option value="2">Nivel 2 - Subgrupo</option>
+            <option value="3">Nivel 3 - Cuenta</option>
+            <option value="4">Nivel 4 - Subcuenta</option>
+        </select>
+    </div>
+</div>

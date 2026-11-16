@@ -8,6 +8,9 @@ class Usuario(models.Model):
     email = models.EmailField(blank=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        db_table = 'usuario'
+    
     def __str__(self):
         return self.username
     

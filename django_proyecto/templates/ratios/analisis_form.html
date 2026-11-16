@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "ratios/_estilos.html" %}
+<div class="r-caja" style="max-width:650px">
+  <h1>Nuevo análisis</h1>
+  <form method="post" class="r-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="r-btn r-azul">Guardar</button>
+    <a class="r-btn r-gris" href="{% url 'ratios_lista' %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

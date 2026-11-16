@@ -10,6 +10,7 @@ class BalanceComprobacion(models.Model):
         return f"Balance Comprobación {self.año}"
     
     class Meta:
+        db_table = 'balance_comprobacion'
         unique_together = ['año']
 
 class EstadoResultados(models.Model):
@@ -24,6 +25,7 @@ class EstadoResultados(models.Model):
         return f"Estado Resultados {self.año}"
     
     class Meta:
+        db_table = 'estado_resultados'
         unique_together = ['año']
 
 class BalanceGeneral(models.Model):
@@ -38,4 +40,5 @@ class BalanceGeneral(models.Model):
         return f"Balance General {self.año}"
     
     class Meta:
+        db_table = 'balance_general'
         unique_together = ['año']

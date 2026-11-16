@@ -18,6 +18,9 @@ class Proyecto(models.Model):
     estado = models.CharField(max_length=15, choices=ESTADOS_PROYECTO, default='ACTIVO')
     centro_costo = models.OneToOneField(CentroCosto, on_delete=models.RESTRICT)
     
+    class Meta:
+        db_table = 'proyecto'
+    
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
 
@@ -27,6 +30,9 @@ class Empleado(models.Model):
     puesto = models.CharField(max_length=50)
     salario_hora = models.DecimalField(max_digits=10, decimal_places=2)
     activo = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'empleado'
     
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
@@ -43,4 +49,5 @@ class CostoDirecto(models.Model):
         return f"{self.proyecto} - {self.empleado} - {self.fecha}"
     
     class Meta:
+        db_table = 'costo_directo'
         ordering = ['-fecha', '-id']

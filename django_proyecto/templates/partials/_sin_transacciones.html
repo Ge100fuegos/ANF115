@@ -1,0 +1,10 @@
+<div class="estado-vacio text-center py-5">
+    <i class="bi bi-journal-x fs-1 text-muted"></i>
+    <p class="fw-semibold mt-3 mb-1">No hay transacciones</p>
+    <p class="text-muted small">No se han registrado transacciones para el periodo seleccionado.</p>
+    {% if periodo_seleccionado and periodo_seleccionado.estado == 'ACTIVO' %}
+    <button class="btn btn-primario btn-sm" data-bs-toggle="modal" data-bs-target="#nuevaTransaccionModal">
+        <i class="bi bi-plus-lg me-1"></i>Crear primera transacción
+    </button>
+    {% endif %}
+</div>

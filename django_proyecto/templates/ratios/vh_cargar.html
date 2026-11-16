@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "ratios/_estilos.html" %}
+<div class="r-caja" style="max-width:750px">
+  <h1>Cargar estado financiero — {{ analisis.empresa }}</h1>
+
+  <form method="post" enctype="multipart/form-data" class="r-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="r-msg error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+
+    <p>{{ form.estado.label_tag }} {{ form.estado }}</p>
+    <p>{{ form.metodo.label_tag }} {{ form.metodo }}</p>
+
+    <div id="bloque-excel">
+      <div class="r-nota">
+        El archivo puede tener cualquier formato: los nombres de las cuentas en una columna
+        y los años en las columnas de la derecha. Las filas sin montos (por ejemplo "Activo:") se toman como títulos.
+      </div>
+      <p>{{ form.archivo.label_tag }} {{ form.archivo }}</p>
+      <p>{{ form.hoja.label_tag }} {{ form.hoja }}<span class="helptext">{{ form.hoja.help_text }}</span></p>
+      <div class="r-grid">
+        <div>{{ form.columna_nombres.label_tag }} {{ form.columna_nombres }}</div>
+        <div>{{ form.fila_encabezado.label_tag }} {{ form.fila_encabezado }}</div>
+        <div>{{ form.fila_inicio.label_tag }} {{ form.fila_inicio }}</div>
+        <div>{{ form.fila_fin.label_tag }} {{ form.fila_fin }}</div>
+      </div>
+    </div>
+
+    <div id="bloque-pegar" style="display:none">
+      <p>{{ form.anios.label_tag }} {{ form.anios }}<span class="helptext">{{ form.anios.help_text }}</span></p>
+      <p>{{ form.texto.label_tag }} {{ form.texto }}<span class="helptext">{{ form.texto.help_text }}</span></p>
+    </div>
+
+    <p style="margin-top:16px">Si ese estado ya estaba cargado, se reemplaza.</p>
+    <button class="r-btn r-verde">Cargar</button>
+    <a class="r-btn r-gris" href="{% url 'vh_detalle' analisis.pk %}">Cancelar</a>
+  </form>
+</div>
+
+<script>
+  function mostrarBloque() {
+    const metodo = document.querySelector('input[name="metodo"]:checked').value;
+    document.getElementById("bloque-excel").style.display = metodo === "excel" ? "" : "none";
+    document.getElementById("bloque-pegar").style.display = metodo === "pegar" ? "" : "none";
+  }
+  document.querySelectorAll('input[name="metodo"]').forEach(r => r.addEventListener("change", mostrarBloque));
+  mostrarBloque();
+</script>
+{% endblock %}

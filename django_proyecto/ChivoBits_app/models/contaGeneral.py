@@ -26,6 +26,7 @@ class Cuenta(models.Model):
     activa = models.BooleanField(default=True)
     
     class Meta:
+        db_table = 'cuenta'
         ordering = ['codigo']
     
     def __str__(self):
@@ -48,6 +49,9 @@ class CentroCosto(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)
     
+    class Meta:
+        db_table = 'centro_costo'
+    
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
     
@@ -68,6 +72,7 @@ class PeriodoContable(models.Model):
         return f"Periodo {self.año} - {self.estado}"
     
     class Meta:
+        db_table = 'periodo_contable'
         ordering = ['-año']
     
     @property
@@ -103,6 +108,7 @@ class Transaccion(models.Model):
         return f"{self.fecha} - {self.descripcion[:30]}"
     
     class Meta:
+        db_table = 'transaccion'
         ordering = ['-fecha', '-id']
     
     def save(self, *args, **kwargs):
