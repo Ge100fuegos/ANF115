@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte financiero — {{ analisis.empresa }}</title>
+<style>
+  @page { size: letter landscape; margin: 12mm 12mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Roboto, Arial, sans-serif; color: #111827; font-size: 11px; margin: 0; background: #f3f4f6; }
+  .hoja { max-width: 1050px; margin: 0 auto; background: #fff; padding: 28px 34px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 10px; padding-bottom: 6px; border-bottom: 2px solid #1f4e78; color: #1f4e78; }
+  h3 { font-size: 12.5px; margin: 16px 0 6px; }
+  p { margin: 4px 0 8px; line-height: 1.45; }
+  .muted { color: #6b7280; }
+  .seccion { margin-top: 28px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  th { background: #1f4e78; color: #fff; font-weight: 600; padding: 5px 6px; text-align: right; }
+  th:first-child { text-align: left; }
+  td { padding: 4px 6px; border-bottom: 1px solid #e5e7eb; text-align: right; }
+  td:first-child { text-align: left; }
+  .formula { display: block; color: #6b7280; font-size: 9.5px; }
+  .titulo td { background: #f3f4f6; font-weight: 700; text-align: left; }
+  .sub td { background: #f9fafb; font-weight: 700; }
+  .total td { background: #e8f0f9; font-weight: 700; }
+  .fer td { background: #fef3c7; font-weight: 700; }
+  .base td { background: #eef6ee; }
+  .sube { color: #15803d; } .baja { color: #b91c1c; }
+  .vh { font-size: 9.5px; } .vh td, .vh th { padding: 3px 4px; }
+  .aviso { border-left: 4px solid #d97706; background: #fffbeb; padding: 6px 10px; margin: 6px 0; }
+  .nota { border-left: 4px solid #1f4e78; background: #f3f6fa; padding: 6px 10px; margin: 6px 0; }
+  .portada { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1f4e78; padding-bottom: 12px; }
+  .indice { columns: 2; margin: 10px 0 0; padding-left: 18px; }
+  .graficas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 8px 0 6px; }
+  .grafica { border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 10px; break-inside: avoid; }
+  .grafica h4 { margin: 0 0 4px; font-size: 11.5px; }
+  .grafica canvas, .grafica img { width: 100%; height: 220px; display: block; }
+  .barra { position: sticky; top: 0; z-index: 5; background: #1f2937; color: #fff; padding: 10px 16px;
+           display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 13px; }
+  .barra label { cursor: pointer; }
+  .barra button, .barra a { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 7px 14px;
+                            font-size: 13px; cursor: pointer; text-decoration: none; }
+  .barra a { background: #4b5563; }
+  .oculta { display: none !important; }
+  @media print {
+    body { background: #fff; }
+    .barra { display: none; }
+    .hoja { max-width: none; padding: 0; }
+    .salto { break-before: page; }
+    .seccion { margin-top: 0; }
+    th, .titulo td, .sub td, .total td, .fer td, .base td, .aviso, .nota {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="barra">
+  <strong>Secciones:</strong>
+  <label><input type="checkbox" data-seccion="sec-estados" checked> Estados</label>
+  <label><input type="checkbox" data-seccion="sec-ratios" checked> Razones</label>
+  <label><input type="checkbox" data-seccion="sec-vh" checked> Vertical y horizontal</label>
+  <label><input type="checkbox" data-seccion="sec-dupont" checked> DuPont</label>
+  <label><input type="checkbox" data-seccion="sec-proforma" checked> Proforma</label>
+  <span style="flex:1"></span>
+  <button type="button" onclick="window.print()">Imprimir / Guardar como PDF</button>
+  <a href="{% url 'ratios_detalle' analisis.pk %}">← Volver</a>
+</div>
+
+<div class="hoja">
+
+  <div class="portada">
+    <div>
+      <div class="muted">Reporte de análisis financiero</div>
+      <h1>{{ analisis.empresa }}</h1>
+      {% if analisis.descripcion %}<p class="muted">{{ analisis.descripcion }}</p>{% endif %}
+    </div>
+    <div style="text-align:right" class="muted">
+      Generado el {{ fecha|date:"d/m/Y" }}<br>
+      {% if periodos %}Años analizados: {% for p in periodos %}{{ p.anio }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+    </div>
+  </div>
+  <ol class="indice muted">
+    {% if ratios %}<li>Estados financieros resumidos</li><li>Razones financieras</li>{% endif %}
+    {% if estados_vh %}<li>Análisis vertical y horizontal</li>{% endif %}
+    {% if dupont %}<li>Análisis DuPont</li>{% endif %}
+    {% if proforma %}<li>Estados financieros proforma</li>{% endif %}
+  </ol>
+
+  {% if ratios %}
+  {# ----------------------------------------------------------- 1. Estados #}
+  <div class="seccion" id="sec-estados">
+    <h2>Estados financieros resumidos</h2>
+    {% for a in ratios.advertencias %}<div class="aviso">{{ a }}</div>{% endfor %}
+    <table>
+      <thead><tr><th>Concepto</th>{% for a in ratios.anios %}<th>{{ a }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for c in ratios.conceptos %}
+      {% ifchanged c.estado %}<tr class="titulo"><td colspan="{{ ratios.anios|length|add:1 }}">{{ c.estado }}</td></tr>{% endifchanged %}
+      <tr><td>{{ c.etiqueta }}</td>{% for v in c.valores %}<td>{{ v|floatformat:"2g" }}</td>{% endfor %}</tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# ----------------------------------------------------------- 2. Razones #}
+  <div class="seccion salto" id="sec-ratios">
+    <h2>Razones financieras</h2>
+    {% if analisis.usar_promedios %}<p class="muted">Las rotaciones, el ROA y el ROE usan saldos promedio del año actual y el anterior.</p>{% endif %}
+    {% for grupo, filas in ratios.grupos %}
+    <h3>{{ grupo }}</h3>
+    <table>
+      <thead><tr><th>Razón</th>{% for a in ratios.anios %}<th>{{ a }}</th>{% endfor %}<th>Variación último año</th></tr></thead>
+      <tbody>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.nombre }}<span class="formula">{{ f.formula }}</span></td>
+        {% for v in f.valores %}
+        <td>{% if v is None %}—{% elif f.unidad == "%" %}{{ v|floatformat:2 }} %{% elif f.unidad == "$" %}${{ v|floatformat:"2g" }}{% else %}{{ v|floatformat:2 }} {{ f.unidad }}{% endif %}</td>
+        {% endfor %}
+        <td class="{% if f.variacion > 0 %}sube{% elif f.variacion < 0 %}baja{% endif %}">
+          {% if f.variacion is None %}—{% else %}{% if f.variacion > 0 %}+{% endif %}{{ f.variacion|floatformat:2 }}{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if grupo == "Actividad" and ratios.sin_inventario %}
+    <p class="muted">No se incluyen la rotación ni los días de inventario: el inventario es $0 en todos los años.</p>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ----------------------------------------------------------- 3. Vertical y horizontal #}
+  {% if estados_vh %}
+  <div id="sec-vh">
+  {% for e in estados_vh %}
+  <div class="seccion salto">
+    <h2>Análisis vertical y horizontal — {{ e.nombre }}</h2>
+    <p class="muted">Vertical: cada cuenta como % de «{{ e.base_nombre }}». Horizontal: variación entre años consecutivos.</p>
+    <table class="vh">
+      <thead>
+        <tr>
+          <th rowspan="2">Cuenta</th>
+          {% for a in e.anios %}<th colspan="2" style="text-align:center">{{ a }}</th>{% endfor %}
+          {% for p in e.pares %}<th colspan="2" style="text-align:center">{{ p }}</th>{% endfor %}
+        </tr>
+        <tr>
+          {% for a in e.anios %}<th>Monto</th><th>Vert.</th>{% endfor %}
+          {% for p in e.pares %}<th>Var. $</th><th>Var. %</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+      {% for f in e.filas %}
+        {% if f.es_titulo %}
+        <tr class="titulo"><td colspan="{{ e.total_columnas }}">{{ f.nombre }}</td></tr>
+        {% else %}
+        <tr{% if f.es_base %} class="base"{% endif %}>
+          <td>{{ f.nombre }}</td>
+          {% for c in f.columnas %}
+          <td>{{ c.valor|floatformat:"2g" }}</td>
+          <td>{% if c.vertical is None %}—{% else %}{{ c.vertical|floatformat:2 }} %{% endif %}</td>
+          {% endfor %}
+          {% for v in f.variaciones %}
+          <td class="{% if v.absoluta > 0 %}sube{% elif v.absoluta < 0 %}baja{% endif %}">{{ v.absoluta|floatformat:"2g" }}</td>
+          <td class="{% if v.absoluta > 0 %}sube{% elif v.absoluta < 0 %}baja{% endif %}">{% if v.relativa is None %}—{% else %}{{ v.relativa|floatformat:2 }} %{% endif %}</td>
+          {% endfor %}
+        </tr>
+        {% endif %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ----------------------------------------------------------- 4. DuPont #}
+  {% if dupont %}
+  <div class="seccion salto" id="sec-dupont">
+    <h2>Análisis DuPont</h2>
+    <p>ROE = Margen neto × Rotación de activos × Multiplicador del capital.</p>
+    <div class="graficas">
+      <div class="grafica"><h4>Rentabilidad (%)</h4><canvas id="g-dupont" width="480" height="220"></canvas></div>
+      <div>
+        <h3 style="margin-top:0">DuPont de 3 factores</h3>
+        <table>
+          <thead><tr><th>Factor</th>{% for a in dupont.anios %}<th>{{ a }}</th>{% endfor %}</tr></thead>
+          <tbody>
+          {% for f in dupont.tabla3 %}
+          <tr{% if f.es_total %} class="total"{% endif %}>
+            <td>{{ f.nombre }}</td>
+            {% for v in f.valores %}<td>{% if v is None %}—{% elif f.unidad == "%" %}{{ v|floatformat:2 }} %{% else %}{{ v|floatformat:4 }}{% endif %}</td>{% endfor %}
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>DuPont ampliado (5 factores)</h3>
+    <table>
+      <thead><tr><th>Factor</th>{% for a in dupont.anios %}<th>{{ a }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for f in dupont.tabla5 %}
+      <tr{% if f.es_total %} class="total"{% endif %}>
+        <td>{{ f.nombre }}<span class="formula">{{ f.formula }}</span></td>
+        {% for v in f.valores %}<td>{% if v is None %}—{% elif f.unidad == "%" %}{{ v|floatformat:2 }} %{% else %}{{ v|floatformat:4 }}{% endif %}</td>{% endfor %}
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    {% if dupont.efectos %}
+    <h3>¿Qué explicó el cambio del ROE? (puntos porcentuales)</h3>
+    <table>
+      <thead><tr><th>Período</th><th>ROE inicial</th><th>Efecto margen</th><th>Efecto rotación</th><th>Efecto apalancamiento</th><th>Cambio total</th><th>ROE final</th></tr></thead>
+      <tbody>
+      {% for e in dupont.efectos %}
+      <tr>
+        <td>{{ e.periodo }}</td>
+        <td>{{ e.roe_inicial|floatformat:2 }} %</td>
+        <td class="{% if e.margen >= 0 %}sube{% else %}baja{% endif %}">{% if e.margen >= 0 %}+{% endif %}{{ e.margen|floatformat:2 }}</td>
+        <td class="{% if e.rotacion >= 0 %}sube{% else %}baja{% endif %}">{% if e.rotacion >= 0 %}+{% endif %}{{ e.rotacion|floatformat:2 }}</td>
+        <td class="{% if e.multiplicador >= 0 %}sube{% else %}baja{% endif %}">{% if e.multiplicador >= 0 %}+{% endif %}{{ e.multiplicador|floatformat:2 }}</td>
+        <td><strong>{% if e.total >= 0 %}+{% endif %}{{ e.total|floatformat:2 }}</strong></td>
+        <td>{{ e.roe_final|floatformat:2 }} %</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# ----------------------------------------------------------- 5. Proforma #}
+  {% if proforma %}
+  <div class="seccion salto" id="sec-proforma">
+    <h2>Estados financieros proforma</h2>
+    <p>
+      Método de porcentaje de ventas. Año base {{ proforma.s.anio_base }};
+      crecimiento de ventas: {% for g in proforma.s.crecimiento %}{{ g|floatformat:2 }} %{% if not forloop.last %}, {% endif %}{% endfor %};
+      impuestos {{ proforma.s.tasa_impuesto|floatformat:2 }} %; dividendos {{ proforma.s.dividendos|floatformat:2 }} %;
+      gastos financieros ${{ proforma.s.gastos_financieros|floatformat:"2g" }} por año;
+      activo fijo {% if proforma.s.activo_fijo_variable %}variable con las ventas{% else %}constante{% endif %}.
+      {% if not proforma.guardado %}<span class="muted">(Supuestos calculados con los datos reales; no se han guardado.)</span>{% endif %}
+    </p>
+    <p class="muted">% de ventas:
+      {% for etq, v in proforma.pct %}{{ etq }} {{ v|floatformat:2 }} %{% if not forloop.last %} · {% endif %}{% endfor %}
+    </p>
+    {% if proforma.fer > 0.005 %}
+    <div class="aviso">La empresa necesita <strong>${{ proforma.fer|floatformat:"2g" }}</strong> de financiamiento externo acumulado al cierre de {{ proforma.ultimo_anio }}.</div>
+    {% elif proforma.fer < -0.005 %}
+    <div class="nota">El crecimiento se financia con recursos propios: excedente de fondos de <strong>${{ proforma.excedente|floatformat:"2g" }}</strong> al cierre de {{ proforma.ultimo_anio }}.</div>
+    {% endif %}
+
+    <h3>Estado de resultados proforma</h3>
+    <table>
+      <thead><tr><th>Concepto</th>{% for c in proforma.columnas %}<th>{{ c.anio }}{% if c.real %} (real){% endif %}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for f in proforma.tabla_er %}
+      <tr class="{% if f.estilo == 's' %}sub{% elif f.estilo == 'T' %}total{% endif %}">
+        <td>{{ f.etiqueta }}</td>{% for v in f.valores %}<td>{% if v is None %}—{% else %}{{ v|floatformat:"2g" }}{% endif %}</td>{% endfor %}
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="graficas" style="break-inside: avoid">
+      <div class="grafica"><h4>Ventas netas (real y proyectadas)</h4><canvas id="g-ventas" width="480" height="220"></canvas></div>
+      <div class="grafica"><h4>Utilidad neta (real y proyectada)</h4><canvas id="g-utilidad" width="480" height="220"></canvas></div>
+    </div>
+
+    <h3 class="salto">Balance general proforma</h3>
+    <table>
+      <thead><tr><th>Concepto</th>{% for c in proforma.columnas %}<th>{{ c.anio }}{% if c.real %} (real){% endif %}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for f in proforma.tabla_bg %}
+      <tr class="{% if f.estilo == 's' %}sub{% elif f.estilo == 'T' %}total{% elif f.estilo == 'f' %}fer{% endif %}">
+        <td>{{ f.etiqueta }}</td>{% for v in f.valores %}<td>{% if v is None %}—{% else %}{{ v|floatformat:"2g" }}{% endif %}</td>{% endfor %}
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+</div>
+
+{% if dupont %}{{ dupont.grafica|json_script:"datos-dupont" }}{% endif %}
+{% if proforma %}{{ proforma.grafica|json_script:"datos-proforma" }}{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  // Mostrar u ocultar secciones antes de imprimir
+  document.querySelectorAll("[data-seccion]").forEach(chk => {
+    const sec = document.getElementById(chk.dataset.seccion);
+    if (!sec) { chk.parentElement.classList.add("oculta"); return; }
+    chk.addEventListener("change", () => sec.classList.toggle("oculta", !chk.checked));
+  });
+
+  // Gráficas: se dibujan sin animación y se convierten en imagen para que salgan bien en el PDF
+  (function () {
+    if (typeof Chart === "undefined") return;
+    const azul = "#2a78d6", naranja = "#eb6834", aqua = "#1baf7a", azulClaro = "#86b6ef";
+    const base = { animation: false, responsive: false, devicePixelRatio: 2,
+                   plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8 } } } };
+    const aImagen = (canvas, chart) => {
+      const img = new Image();
+      img.src = chart.toBase64Image();
+      img.alt = canvas.closest(".grafica").querySelector("h4").textContent;
+      canvas.replaceWith(img);
+      chart.destroy();
+    };
+    const dibujar = (id, config) => {
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      aImagen(canvas, new Chart(canvas, { ...config, options: { ...base, ...config.options } }));
+    };
+    const linea = (label, data, color) => ({ label, data, borderColor: color, backgroundColor: color,
+      borderWidth: 2, pointRadius: 3, tension: 0 });
+    const ejeY = sufijo => ({ y: { ticks: { callback: v => v.toLocaleString("es-SV") + sufijo }, grid: { color: "#ecebe8" } },
+                              x: { grid: { display: false } } });
+
+    const d = document.getElementById("datos-dupont");
+    if (d) {
+      const g = JSON.parse(d.textContent);
+      dibujar("g-dupont", { type: "line",
+        data: { labels: g.anios, datasets: [linea("ROE", g.roe, azul), linea("ROA", g.roa, naranja), linea("Margen neto", g.margen, aqua)] },
+        options: { scales: ejeY(" %") } });
+    }
+    const p = document.getElementById("datos-proforma");
+    if (p) {
+      const g = JSON.parse(p.textContent);
+      const etiquetas = g.anios.map((a, i) => g.real[i] ? `${a} (real)` : a);
+      const colores = g.real.map(r => r ? azul : azulClaro);
+      const barras = (id, label, data) => dibujar(id, { type: "bar",
+        data: { labels: etiquetas, datasets: [{ label, data, backgroundColor: colores, borderRadius: 4, maxBarThickness: 40 }] },
+        options: { plugins: { legend: { display: false } }, scales: ejeY("") } });
+      barras("g-ventas", "Ventas netas", g.ventas);
+      barras("g-utilidad", "Utilidad neta", g.utilidad);
+    }
+  })();
+</script>
+</body>
+</html>

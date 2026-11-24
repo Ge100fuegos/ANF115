@@ -4,9 +4,11 @@ from ChivoBits_app.views import pronosticos
 from ChivoBits_app.views import ratios
 from ChivoBits_app.views import analisis_vh
 from ChivoBits_app.views import dupont_proforma
+from ChivoBits_app.views import reporte
 
 urlpatterns = [
     path('libroMayor/', contaGeneral.libro, name='libroMayor'),
+        path("ratios/<int:pk>/reporte/", reporte.reporte_analisis, name="reporte_analisis"),
     path('catalogoCuentas/', contaGeneral.catalogo_cuentas, name='catalogoCuentas'),
     path('catalogoCuentas/nueva/', contaGeneral.crear_cuenta, name='crear_cuenta'),
     path('catalogoCuentas/importar/', contaGeneral.catalogo_importar, name='catalogo_importar'),
