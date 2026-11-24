@@ -1,0 +1,33 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  // Estilo común de las gráficas de análisis financiero
+  const COLORES = { azul: "#2a78d6", naranja: "#eb6834", aqua: "#1baf7a",
+                    azulClaro: "#86b6ef", necesita: "#d03b3b", excedente: "#0ca30c" };
+  Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+  Chart.defaults.color = "#52514e";
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.tooltip.backgroundColor = "#0b0b0b";
+  Chart.defaults.plugins.tooltip.padding = 10;
+  Chart.defaults.plugins.tooltip.cornerRadius = 6;
+
+  function ejes(formato) {
+    return {
+      x: { grid: { display: false } },
+      y: { grid: { color: "#ecebe8" }, border: { display: false },
+           ticks: { callback: v => formato(v) } },
+    };
+  }
+  const fmtPct = v => v == null ? "—" : v.toLocaleString("es-SV", { maximumFractionDigits: 2 }) + " %";
+  const fmtVeces = v => v == null ? "—" : v.toLocaleString("es-SV", { maximumFractionDigits: 2 });
+  const fmtPp = v => v == null ? "—" : (v > 0 ? "+" : "") + v.toLocaleString("es-SV", { maximumFractionDigits: 2 }) + " pp";
+  const fmtDolar = v => v == null ? "—" : "$" + v.toLocaleString("es-SV", { maximumFractionDigits: 0 });
+  const fmtDolar2 = v => v == null ? "—" : "$" + v.toLocaleString("es-SV", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const barra = { borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, borderWidth: 0 };
+</script>
+<style>
+  .gr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 18px; margin: 8px 0 10px; }
+  .gr-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; background: #fcfcfb; }
+  .gr-card h3 { margin: 0 0 2px; font-size: 15px; }
+  .gr-card p { margin: 0 0 10px; font-size: 12px; color: #6b7280; }
+  .gr-lienzo { position: relative; height: 260px; }
+</style>

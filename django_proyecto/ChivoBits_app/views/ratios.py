@@ -30,12 +30,15 @@ def ratios_detalle(request, pk):
     periodos = list(analisis.periodos.all())
     anios = [p.anio for p in periodos]
     resultados = calcular_ratios(analisis.periodos_lista(), analisis.usar_promedios)
+        # Empresas de servicios: sin inventario en ningún año, esas razones no aplican
+    sin_inventario = bool(periodos) and all(not (p.valores.get("inventarios") or 0) for p in periodos)
+    omitir = {"rotacion_inventario", "dias_inventario"} if sin_inventario else set()
 
     grupos = []
     for grupo in GRUPOS:
         filas = []
         for clave, (g, nombre, unidad, formula, descripcion, _) in RATIOS.items():
-            if g != grupo:
+            if g != grupo or clave in omitir:
                 continue
             valores = [resultados[clave].get(a) for a in anios]
             variacion = None
@@ -61,6 +64,7 @@ def ratios_detalle(request, pk):
     return render(request, "ratios/detalle.html", {
         "analisis": analisis, "periodos": periodos, "anios": anios,
         "grupos": grupos, "conceptos": conceptos, "advertencias": advertencias,
+        "sin_inventario": sin_inventario,
         "url_actual": "ratios_lista",
     })
 

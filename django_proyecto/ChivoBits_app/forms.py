@@ -283,3 +283,74 @@ class ImportarCatalogoForm(forms.Form):
         except Exception:
             raise forms.ValidationError("No se pudo leer el archivo. Verifica que sea un Excel válido.")
         return archivo
+
+# ---------------------------------------------------------------- DuPont y Proforma
+from ChivoBits_app.dupont_proforma import MAX_ANIOS, PCT_TODOS, leer_plantilla_proforma
+
+
+class ProformaForm(forms.Form):
+    anio_base = forms.TypedChoiceField(label="Año base", coerce=int)
+    crecimiento = forms.CharField(
+        label="Crecimiento de ventas por año (%)",
+        help_text=f"Un valor por cada año a proyectar, separados por coma. Ej.: 10, 8, 6 (máximo {MAX_ANIOS} años)")
+    activo_fijo_variable = forms.BooleanField(label="El activo fijo crece con las ventas", required=False)
+    gastos_financieros = forms.FloatField(label="Gastos financieros proyectados ($ por año)", min_value=0)
+    tasa_impuesto = forms.FloatField(label="Impuestos sobre la utilidad (%)", min_value=0, max_value=100)
+    dividendos = forms.FloatField(label="Dividendos (% de la utilidad neta)", min_value=0, max_value=100)
+
+    def __init__(self, *args, anios=(), supuestos=None, **kwargs):
+        s = supuestos or {}
+        kwargs["initial"] = {
+            "anio_base": s.get("anio_base"),
+            "crecimiento": ", ".join(f"{g:g}" for g in s.get("crecimiento", [])),
+            "activo_fijo_variable": s.get("activo_fijo_variable", True),
+            "gastos_financieros": s.get("gastos_financieros", 0),
+            "tasa_impuesto": s.get("tasa_impuesto", 0),
+            "dividendos": s.get("dividendos", 0),
+            **{f"pct_{k}": s.get("pct", {}).get(k, 0) for k, _ in PCT_TODOS},
+        }
+        super().__init__(*args, **kwargs)
+        self.fields["anio_base"].choices = [(a, a) for a in anios]
+        for k, etiqueta in PCT_TODOS:
+            self.fields[f"pct_{k}"] = forms.FloatField(label=f"{etiqueta} (% de ventas)")
+
+    def campos_pct(self):
+        return [self[f"pct_{k}"] for k, _ in PCT_TODOS]
+
+    def clean_crecimiento(self):
+        texto = self.cleaned_data["crecimiento"].strip()
+        try:
+            valores = [float(x) for x in re.split(r"[,;\s]+", texto) if x]
+        except ValueError:
+            raise forms.ValidationError("Escribe números separados por coma. Ej.: 10, 8, 6")
+        if not 1 <= len(valores) <= MAX_ANIOS:
+            raise forms.ValidationError(f"Escribe entre 1 y {MAX_ANIOS} valores.")
+        return valores
+
+    def supuestos(self):
+        c = self.cleaned_data
+        return {
+            "anio_base": c["anio_base"],
+            "crecimiento": c["crecimiento"],
+            "pct": {k: c[f"pct_{k}"] for k, _ in PCT_TODOS},
+            "activo_fijo_variable": c["activo_fijo_variable"],
+            "gastos_financieros": c["gastos_financieros"],
+            "tasa_impuesto": c["tasa_impuesto"],
+            "dividendos": c["dividendos"],
+        }
+
+
+class ImportarProformaForm(forms.Form):
+    archivo = forms.FileField(label="Plantilla de supuestos (.xlsx)")
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data["archivo"]
+        if not archivo.name.lower().endswith(".xlsx"):
+            raise forms.ValidationError("Solo se aceptan archivos .xlsx")
+        try:
+            self.supuestos = leer_plantilla_proforma(archivo)
+        except ValueError as e:
+            raise forms.ValidationError(str(e))
+        except Exception:
+            raise forms.ValidationError("No se pudo leer el archivo. Verifica que sea la plantilla de supuestos.")
+        return archivo

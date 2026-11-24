@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "ratios/_estilos.html" %}
+<div class="r-caja" style="max-width:700px">
+  <h1>Importar supuestos del proforma — {{ analisis.empresa }}</h1>
+  <ol>
+    <li><a href="{% url 'proforma_plantilla' analisis.pk %}">Descarga la plantilla de supuestos</a>.
+        Ya viene llena con los porcentajes reales del último año.</li>
+    <li>Cambia el año base, los crecimientos de ventas y los porcentajes que necesites.</li>
+    <li>Súbela aquí. Reemplaza los supuestos guardados.</li>
+  </ol>
+  <p style="font-size:14px;color:#6b7280">Los datos reales (ventas, activos, etc.) se toman de los estados financieros del
+    análisis; si faltan, cárgalos primero con «Importar Excel» en la pantalla de ratios.</p>
+  <form method="post" enctype="multipart/form-data" class="r-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="r-btn r-verde">Importar</button>
+    <a class="r-btn r-gris" href="{% url 'proforma_detalle' analisis.pk %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

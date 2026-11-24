@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "ratios/_estilos.html" %}
+<style>
+  .pf-sub td { background: #f9fafb; font-weight: bold; }
+  .pf-total td { background: #eff6ff; font-weight: bold; }
+  .pf-fer td { background: #fef3c7; font-weight: bold; }
+  .pf-real { background: #f3f4f6 !important; }
+  .r-grid select { width: 100%; padding: 7px; border: 1px solid #d1d5db; border-radius: 6px; }
+</style>
+<div class="r-caja" style="max-width:1300px">
+  {% for m in messages %}<div class="r-msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+
+  <h1>Estados financieros proforma — {{ analisis.empresa }}</h1>
+  <div class="r-acciones">
+    <a class="r-btn r-verde" href="{% url 'proforma_importar' analisis.pk %}">Importar supuestos (Excel)</a>
+    <a class="r-btn r-naranja" href="{% url 'proforma_plantilla' analisis.pk %}">Descargar plantilla de supuestos</a>
+    <a class="r-btn r-azul" href="{% url 'dupont_detalle' analisis.pk %}">Análisis DuPont</a>
+    <a class="r-btn r-gris" href="{% url 'ratios_detalle' analisis.pk %}">← Volver a ratios</a>
+  </div>
+
+  <div class="r-nota">
+    <strong>Método de porcentaje de ventas.</strong> Se proyectan las ventas con la tasa de crecimiento y cada rubro
+    que depende de ellas se calcula como el mismo porcentaje de las ventas. El pasivo no corriente y los otros activos
+    no corrientes se mantienen; el patrimonio crece con la utilidad retenida.
+    Si el balance proyectado no cuadra, la diferencia son los <strong>fondos externos requeridos</strong>:
+    el financiamiento nuevo que hace falta (positivo) o el excedente de fondos (negativo).
+  </div>
+
+  {% if sin_guardar %}
+  <div class="r-aviso">Estos supuestos salen de los datos reales del año base y todavía no están guardados.
+    Revísalos y presiona «Guardar y recalcular».</div>
+  {% endif %}
+
+  <h2>Supuestos</h2>
+  <form method="get" class="r-acciones" style="align-items:center">
+    <input type="hidden" name="restablecer" value="1">
+    <label style="font-weight:bold">Calcular % con los datos reales de:</label>
+    <select name="base">{% for a in anios %}<option value="{{ a }}" {% if a == s.anio_base %}selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+    <button class="r-btn r-gris">Restablecer</button>
+  </form>
+
+  <form method="post" class="r-form">
+    {% csrf_token %}
+    {% if form.errors %}<div class="r-msg error">Revisa los campos marcados.</div>{% endif %}
+    <fieldset>
+      <legend>Generales</legend>
+      <div class="r-grid">
+        <div>{{ form.anio_base.label_tag }} {{ form.anio_base }}{{ form.anio_base.errors }}</div>
+        <div>{{ form.crecimiento.label_tag }} {{ form.crecimiento }}<span class="r-formula">{{ form.crecimiento.help_text }}</span>{{ form.crecimiento.errors }}</div>
+        <div>{{ form.gastos_financieros.label_tag }} {{ form.gastos_financieros }}{{ form.gastos_financieros.errors }}</div>
+        <div>{{ form.tasa_impuesto.label_tag }} {{ form.tasa_impuesto }}{{ form.tasa_impuesto.errors }}</div>
+        <div>{{ form.dividendos.label_tag }} {{ form.dividendos }}{{ form.dividendos.errors }}</div>
+        <div style="align-self:end">{{ form.activo_fijo_variable }} {{ form.activo_fijo_variable.label }}</div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Porcentajes de las ventas</legend>
+      <div class="r-grid">
+        {% for campo in form.campos_pct %}
+        <div>{{ campo.label_tag }} {{ campo }}{{ campo.errors }}</div>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <button class="r-btn r-verde">Guardar y recalcular</button>
+  </form>
+
+  {% if fer > 0.005 %}
+  <div class="r-aviso" style="margin-top:20px">
+    Para sostener el crecimiento proyectado, la empresa necesita <strong>${{ fer|floatformat:"2g" }}</strong>
+    de financiamiento externo acumulado (préstamos o aportes de capital) al cierre de {{ ultimo_anio }}.
+  </div>
+  {% elif fer < -0.005 %}
+  <div class="r-msg" style="margin-top:20px">
+    El crecimiento proyectado se financia con recursos propios y queda un <strong>excedente de fondos</strong>
+    de ${{ excedente|floatformat:"2g" }} al cierre de {{ ultimo_anio }}.
+  </div>
+  {% endif %}
+
+    <h2>Gráficas</h2>
+  {% include "ratios/_chartjs.html" %}
+  {{ grafica|json_script:"datos-proforma" }}
+  <div class="gr-grid">
+    <div class="gr-card">
+      <h3>Ventas netas</h3>
+      <p>Año base real (oscuro) y años proyectados (claro)</p>
+      <div class="gr-lienzo"><canvas id="gr-ventas" role="img" aria-label="Ventas netas reales y proyectadas"></canvas></div>
+    </div>
+    <div class="gr-card">
+      <h3>Utilidad neta</h3>
+      <p>Año base real (oscuro) y años proyectados (claro)</p>
+      <div class="gr-lienzo"><canvas id="gr-utilidad" role="img" aria-label="Utilidad neta real y proyectada"></canvas></div>
+    </div>
+    <div class="gr-card" style="grid-column: 1 / -1">
+      <h3>Fondos externos requeridos (acumulado)</h3>
+      <p>Barra roja hacia arriba = financiamiento que hace falta · barra verde hacia abajo = excedente de fondos</p>
+      <div class="gr-lienzo"><canvas id="gr-fer" role="img" aria-label="Fondos externos requeridos por año proyectado"></canvas></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const g = JSON.parse(document.getElementById("datos-proforma").textContent);
+      const etiquetas = g.anios.map((a, i) => g.real[i] ? `${a} (real)` : a);
+      const colorReal = g.real.map(r => r ? COLORES.azul : COLORES.azulClaro);
+
+      const barras = (id, label, data) => new Chart(document.getElementById(id), {
+        type: "bar",
+        data: { labels: etiquetas, datasets: [{ label, data, backgroundColor: colorReal, ...barra,
+                borderSkipped: false }] },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: {
+              title: items => items[0].label,
+              label: c => `${label}: ${fmtDolar2(c.parsed.y)}` + (g.real[c.dataIndex] ? "" : " (proyectado)"),
+            } },
+          },
+          scales: ejes(fmtDolar),
+        },
+      });
+      barras("gr-ventas", "Ventas netas", g.ventas);
+      barras("gr-utilidad", "Utilidad neta", g.utilidad);
+
+      new Chart(document.getElementById("gr-fer"), {
+        type: "bar",
+        data: { labels: g.anios_fer, datasets: [{
+          label: "Fondos externos requeridos", data: g.fer,
+          backgroundColor: g.fer.map(v => v > 0 ? COLORES.necesita : COLORES.excedente),
+          ...barra, borderSkipped: false,
+        }] },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => c.parsed.y > 0
+              ? `Necesita financiamiento: ${fmtDolar2(c.parsed.y)}`
+              : `Excedente de fondos: ${fmtDolar2(-c.parsed.y)}` } },
+          },
+          scales: { x: { grid: { display: false } },
+                    y: { border: { display: false }, ticks: { callback: v => fmtDolar(v) },
+                         grid: { color: ctx => ctx.tick.value === 0 ? "#9ca3af" : "#ecebe8",
+                                 lineWidth: ctx => ctx.tick.value === 0 ? 1.5 : 1 } } },
+        },
+      });
+    })();
+  </script>
+
+  <h2>Estado de resultados proforma</h2>
+  <div class="r-scroll">
+  <table class="r-tabla">
+    <tr>
+      <th style="text-align:left">Concepto</th>
+      {% for c in columnas %}<th {% if c.real %}class="pf-real"{% endif %}>{{ c.anio }}{% if c.real %}<br><small>real</small>{% else %}<br><small>proyectado</small>{% endif %}</th>{% endfor %}
+    </tr>
+    {% for f in tabla_er %}
+    <tr class="{% if f.estilo == 's' %}pf-sub{% elif f.estilo == 'T' %}pf-total{% endif %}">
+      <td>{{ f.etiqueta }}</td>
+      {% for v in f.valores %}<td class="num">{% if v is None %}—{% else %}{{ v|floatformat:"2g" }}{% endif %}</td>{% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+
+  <h2>Balance general proforma</h2>
+  <div class="r-scroll">
+  <table class="r-tabla">
+    <tr>
+      <th style="text-align:left">Concepto</th>
+      {% for c in columnas %}<th {% if c.real %}class="pf-real"{% endif %}>{{ c.anio }}{% if c.real %}<br><small>real</small>{% else %}<br><small>proyectado</small>{% endif %}</th>{% endfor %}
+    </tr>
+    {% for f in tabla_bg %}
+    <tr class="{% if f.estilo == 's' %}pf-sub{% elif f.estilo == 'T' %}pf-total{% elif f.estilo == 'f' %}pf-fer{% endif %}">
+      <td>{{ f.etiqueta }}</td>
+      {% for v in f.valores %}<td class="num">{% if v is None %}—{% else %}{{ v|floatformat:"2g" }}{% endif %}</td>{% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  <p style="font-size:13px;color:#6b7280">
+    Los fondos externos requeridos no generan intereses en la proyección. Si se financian con deuda,
+    súbelos en «Gastos financieros proyectados» para ver su efecto en la utilidad.
+  </p>
+</div>
+{% endblock %}

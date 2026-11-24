@@ -43,3 +43,12 @@ class LineaEstado(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class Proforma(models.Model):
+    analisis = models.OneToOneField(AnalisisFinanciero, on_delete=models.CASCADE, related_name="proforma")
+    supuestos = models.JSONField(default=dict)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Proforma - {self.analisis}"

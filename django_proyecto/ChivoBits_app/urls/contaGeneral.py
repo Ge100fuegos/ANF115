@@ -3,6 +3,7 @@ from ChivoBits_app.views import contaGeneral
 from ChivoBits_app.views import pronosticos
 from ChivoBits_app.views import ratios
 from ChivoBits_app.views import analisis_vh
+from ChivoBits_app.views import dupont_proforma
 
 urlpatterns = [
     path('libroMayor/', contaGeneral.libro, name='libroMayor'),
@@ -20,6 +21,12 @@ path('catalogoCuentas/plantilla/', contaGeneral.catalogo_plantilla, name='catalo
     path("pronosticos/importar/", pronosticos.importar_excel, name="pronostico_importar"),
     path("pronosticos/<int:pk>/", pronosticos.pronostico_detalle, name="pronostico_detalle"),
     path("pronosticos/<int:pk>/eliminar/", pronosticos.pronostico_eliminar, name="pronostico_eliminar"),
+    
+
+        path("ratios/<int:pk>/dupont/", dupont_proforma.dupont_detalle, name="dupont_detalle"),
+    path("ratios/<int:pk>/proforma/", dupont_proforma.proforma_detalle, name="proforma_detalle"),
+    path("ratios/<int:pk>/proforma/importar/", dupont_proforma.proforma_importar, name="proforma_importar"),
+    path("ratios/<int:pk>/proforma/plantilla/", dupont_proforma.proforma_plantilla, name="proforma_plantilla"),
 
     path("ratios/", ratios.ratios_lista, name="ratios_lista"),
 path("ratios/nuevo/", ratios.ratios_crear, name="ratios_crear"),

@@ -4,3 +4,4 @@ from .costos import Proyecto, Empleado, CostoDirecto
 from .estadosFinancieros import BalanceComprobacion, EstadoResultados, BalanceGeneral
 from .pronosticos import SerieHistorica, DatoSerie, Pronostico
 from .ratios import AnalisisFinanciero, EstadoPeriodo, LineaEstado
+from .ratios import AnalisisFinanciero, EstadoPeriodo, LineaEstado, Proforma

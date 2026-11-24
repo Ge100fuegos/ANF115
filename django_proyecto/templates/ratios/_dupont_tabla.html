@@ -1,0 +1,14 @@
+<table class="r-tabla">
+  <tr>
+    <th style="text-align:left">Factor</th>
+    {% for a in anios %}<th>{{ a }}</th>{% endfor %}
+  </tr>
+  {% for f in tabla %}
+  <tr {% if f.es_total %}class="r-total"{% endif %}>
+    <td>{{ f.nombre }}<span class="r-formula">{{ f.formula }}</span></td>
+    {% for v in f.valores %}
+    <td class="num">{% if v is None %}—{% elif f.unidad == "%" %}{{ v|floatformat:2 }} %{% else %}{{ v|floatformat:4 }}{% endif %}</td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>

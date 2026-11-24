@@ -13,6 +13,8 @@
     <a class="r-btn r-verde" href="{% url 'ratios_importar' analisis.pk %}">Importar Excel</a>
     <a class="r-btn r-naranja" href="{% url 'ratios_plantilla' analisis.pk %}">Descargar plantilla</a>
     <a class="r-btn r-azul" href="{% url 'vh_detalle' analisis.pk %}">Análisis vertical y horizontal</a>
+        <a class="r-btn r-azul" href="{% url 'dupont_detalle' analisis.pk %}">Análisis DuPont</a>
+    <a class="r-btn r-azul" href="{% url 'proforma_detalle' analisis.pk %}">Estados proforma</a>
     <a class="r-btn r-gris" href="{% url 'ratios_lista' %}">← Volver</a>
   </div>
 
@@ -74,8 +76,18 @@
       </td>
       {% endif %}
     </tr>
-    {% endfor %}
+        {% endfor %}
   </table>
+  {% if grupo == "Liquidez" and sin_inventario %}
+  <p class="r-formula" style="margin-top:-4px">La prueba ácida es igual a la razón corriente porque la empresa no tiene inventario.</p>
+  {% endif %}
+  {% if grupo == "Actividad" and sin_inventario %}
+  <div class="r-nota">
+    No se muestran la <strong>rotación de inventarios</strong> ni los <strong>días de inventario</strong>:
+    el inventario es $0 en todos los años, como en una empresa de servicios.
+    El ciclo de conversión del efectivo queda como días de cobro menos días de pago.
+  </div>
+  {% endif %}
   {% endfor %}
 
   {% if analisis.usar_promedios %}

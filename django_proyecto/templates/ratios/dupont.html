@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "ratios/_estilos.html" %}
+<style>
+  .dp-arbol { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 10px 0 24px; }
+  .dp-nivel { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .dp-caja { border: 2px solid #2563eb; border-radius: 8px; padding: 10px 14px; min-width: 170px; text-align: center; background: #eff6ff; }
+  .dp-caja.dp-roe { border-color: #16a34a; background: #dcfce7; }
+  .dp-caja small { display: block; color: #6b7280; font-size: 12px; }
+  .dp-caja strong { font-size: 20px; }
+  .dp-op { font-size: 22px; font-weight: bold; color: #6b7280; }
+  .r-total td { background: #f0fdf4; font-weight: bold; }
+</style>
+<div class="r-caja">
+  {% for m in messages %}<div class="r-msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+
+  <h1>Análisis DuPont — {{ analisis.empresa }}</h1>
+  <div class="r-acciones">
+    <a class="r-btn r-verde" href="{% url 'ratios_importar' analisis.pk %}">Importar Excel</a>
+    <a class="r-btn r-azul" href="{% url 'proforma_detalle' analisis.pk %}">Estados proforma</a>
+    <a class="r-btn r-gris" href="{% url 'ratios_detalle' analisis.pk %}">← Volver a ratios</a>
+  </div>
+
+  <div class="r-nota">
+    El análisis DuPont descompone la rentabilidad sobre el patrimonio (ROE) para saber de dónde viene:
+    de lo que se gana por cada venta (<strong>margen</strong>), de cuánto se vende con los activos
+    (<strong>rotación</strong>) o de cuánta deuda se usa (<strong>apalancamiento</strong>).
+    Usa los mismos datos de la sección de razones financieras.
+    {% if analisis.usar_promedios %}Activo y patrimonio se toman como promedio del año actual y el anterior.{% endif %}
+  </div>
+
+  <h2>Árbol DuPont {{ anio_arbol }}</h2>
+  <div class="dp-arbol">
+    <div class="dp-nivel">
+      <div class="dp-caja dp-roe"><small>ROE</small><strong>{{ arbol.roe|floatformat:2 }} %</strong></div>
+    </div>
+    <div class="dp-nivel">
+      <div class="dp-caja"><small>ROA</small><strong>{{ arbol.roa|floatformat:2 }} %</strong></div>
+      <span class="dp-op">×</span>
+      <div class="dp-caja"><small>Multiplicador del capital</small><strong>{{ arbol.multiplicador|floatformat:2 }}</strong>
+        <small>Activo ${{ arbol.activo|floatformat:"2g" }} / Patrimonio ${{ arbol.patrimonio|floatformat:"2g" }}</small></div>
+    </div>
+    <div class="dp-nivel">
+      <div class="dp-caja"><small>Margen neto</small><strong>{{ arbol.margen_neto|floatformat:2 }} %</strong>
+        <small>Utilidad ${{ arbol.utilidad_neta|floatformat:"2g" }} / Ventas ${{ arbol.ventas|floatformat:"2g" }}</small></div>
+      <span class="dp-op">×</span>
+      <div class="dp-caja"><small>Rotación de activos</small><strong>{{ arbol.rotacion|floatformat:2 }} veces</strong>
+        <small>Ventas ${{ arbol.ventas|floatformat:"2g" }} / Activo ${{ arbol.activo|floatformat:"2g" }}</small></div>
+    </div>
+  </div>
+
+    <h2>Gráficas</h2>
+  {% include "ratios/_chartjs.html" %}
+  {{ grafica|json_script:"datos-dupont" }}
+  <div class="gr-grid">
+    <div class="gr-card">
+      <h3>Rentabilidad</h3>
+      <p>ROE, ROA y margen neto por año (%)</p>
+      <div class="gr-lienzo"><canvas id="gr-rentabilidad" role="img" aria-label="ROE, ROA y margen neto por año"></canvas></div>
+    </div>
+    <div class="gr-card">
+      <h3>Rotación y apalancamiento</h3>
+      <p>Rotación de activos y multiplicador del capital (veces)</p>
+      <div class="gr-lienzo"><canvas id="gr-factores" role="img" aria-label="Rotación de activos y multiplicador del capital por año"></canvas></div>
+    </div>
+    {% if efectos %}
+    <div class="gr-card" style="grid-column: 1 / -1">
+      <h3>¿Qué movió el ROE?</h3>
+      <p>Aporte de cada factor al cambio del ROE entre años (puntos porcentuales)</p>
+      <div class="gr-lienzo"><canvas id="gr-efectos" role="img" aria-label="Efecto del margen, la rotación y el apalancamiento en el cambio del ROE"></canvas></div>
+    </div>
+    {% endif %}
+  </div>
+  <script>
+    (function () {
+      const g = JSON.parse(document.getElementById("datos-dupont").textContent);
+      const linea = (label, data, color) => ({
+        label, data, borderColor: color, backgroundColor: color, borderWidth: 2,
+        pointRadius: 4, pointHoverRadius: 6, pointBorderColor: "#fcfcfb", pointBorderWidth: 2, tension: 0,
+      });
+
+      new Chart(document.getElementById("gr-rentabilidad"), {
+        type: "line",
+        data: { labels: g.anios, datasets: [
+          linea("ROE", g.roe, COLORES.azul),
+          linea("ROA", g.roa, COLORES.naranja),
+          linea("Margen neto", g.margen, COLORES.aqua),
+        ]},
+        options: {
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtPct(c.parsed.y)}` } } },
+          scales: ejes(fmtPct),
+        },
+      });
+
+      new Chart(document.getElementById("gr-factores"), {
+        type: "bar",
+        data: { labels: g.anios, datasets: [
+          { label: "Rotación de activos", data: g.rotacion, backgroundColor: COLORES.azul, ...barra },
+          { label: "Multiplicador del capital", data: g.multiplicador, backgroundColor: COLORES.naranja, ...barra },
+        ]},
+        options: {
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtVeces(c.parsed.y)} veces` } } },
+          scales: ejes(fmtVeces),
+        },
+      });
+
+      const lienzoEfectos = document.getElementById("gr-efectos");
+      if (lienzoEfectos) {
+        const e = g.efectos;
+        new Chart(lienzoEfectos, {
+          type: "bar",
+          data: { labels: e.periodos, datasets: [
+            { label: "Efecto margen", data: e.margen, backgroundColor: COLORES.azul, ...barra, borderSkipped: false },
+            { label: "Efecto rotación", data: e.rotacion, backgroundColor: COLORES.naranja, ...barra, borderSkipped: false },
+            { label: "Efecto apalancamiento", data: e.multiplicador, backgroundColor: COLORES.aqua, ...barra, borderSkipped: false },
+          ]},
+          options: {
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: { tooltip: { callbacks: {
+              label: c => `${c.dataset.label}: ${fmtPp(c.parsed.y)}`,
+              footer: items => "Cambio total: " + fmtPp(items.reduce((s, i) => s + (i.parsed.y || 0), 0)),
+            } } },
+            scales: { ...ejes(fmtPp), y: { ...ejes(fmtPp).y,
+              grid: { color: ctx => ctx.tick.value === 0 ? "#9ca3af" : "#ecebe8",
+                      lineWidth: ctx => ctx.tick.value === 0 ? 1.5 : 1 } } },
+          },
+        });
+      }
+    })();
+  </script>
+
+  <h2>DuPont de 3 factores</h2>
+  {% include "ratios/_dupont_tabla.html" with tabla=tabla3 %}
+
+  <h2>DuPont ampliado (5 factores)</h2>
+  <p style="font-size:14px;color:#6b7280">Separa el margen neto en el efecto de los impuestos, de los intereses y de la operación.</p>
+  {% include "ratios/_dupont_tabla.html" with tabla=tabla5 %}
+
+  {% if efectos %}
+  <h2>¿Qué explicó el cambio del ROE?</h2>
+  <table class="r-tabla">
+    <tr>
+      <th style="text-align:left">Período</th><th>ROE inicial</th><th>Efecto margen</th>
+      <th>Efecto rotación</th><th>Efecto apalancamiento</th><th>Cambio total</th><th>ROE final</th>
+    </tr>
+    {% for e in efectos %}
+    <tr>
+      <td>{{ e.periodo }}</td>
+      <td class="num">{{ e.roe_inicial|floatformat:2 }} %</td>
+      <td class="num">{% if e.margen >= 0 %}<span class="r-sube">+{{ e.margen|floatformat:2 }}</span>{% else %}<span class="r-baja">{{ e.margen|floatformat:2 }}</span>{% endif %}</td>
+      <td class="num">{% if e.rotacion >= 0 %}<span class="r-sube">+{{ e.rotacion|floatformat:2 }}</span>{% else %}<span class="r-baja">{{ e.rotacion|floatformat:2 }}</span>{% endif %}</td>
+      <td class="num">{% if e.multiplicador >= 0 %}<span class="r-sube">+{{ e.multiplicador|floatformat:2 }}</span>{% else %}<span class="r-baja">{{ e.multiplicador|floatformat:2 }}</span>{% endif %}</td>
+      <td class="num"><strong>{% if e.total >= 0 %}+{% endif %}{{ e.total|floatformat:2 }}</strong></td>
+      <td class="num">{{ e.roe_final|floatformat:2 }} %</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p style="font-size:13px;color:#6b7280">
+    Efectos en puntos porcentuales del ROE. Se calculan cambiando un factor a la vez (primero el margen,
+    luego la rotación y al final el apalancamiento); la suma de los tres es igual al cambio total.
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

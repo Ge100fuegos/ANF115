@@ -93,7 +93,7 @@ RATIOS = {
     "dias_inventario": ("Actividad", "Días de inventario", "días",
         "(Inventario promedio × 365) / Costo de ventas",
         "Días que el inventario permanece en bodega.",
-        lambda d: _div(d.prom("inventarios") * 365, d["costo_ventas"])),
+        lambda d: _div(d.prom("inventarios") * 365, d["costo_ventas"]) if d.prom("inventarios") else None),
     "ciclo_efectivo": ("Actividad", "Ciclo de conversión del efectivo", "días",
         "Días de inventario + Período de cobro − Período de pago",
         "Días entre que se paga a proveedores y se cobra a clientes.",
