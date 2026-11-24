@@ -7,6 +7,9 @@ from ChivoBits_app.views import analisis_vh
 urlpatterns = [
     path('libroMayor/', contaGeneral.libro, name='libroMayor'),
     path('catalogoCuentas/', contaGeneral.catalogo_cuentas, name='catalogoCuentas'),
+    path('catalogoCuentas/nueva/', contaGeneral.crear_cuenta, name='crear_cuenta'),
+    path('catalogoCuentas/importar/', contaGeneral.catalogo_importar, name='catalogo_importar'),
+path('catalogoCuentas/plantilla/', contaGeneral.catalogo_plantilla, name='catalogo_plantilla'),
     path('libro-mayor/', contaGeneral.libro_mayor, name='libro_mayor'),
     path('crear-periodo/', contaGeneral.crear_periodo_contable, name='crear_periodo_contable'),
     path('crear-transaccion/', contaGeneral.crear_transaccion, name='crear_transaccion'),

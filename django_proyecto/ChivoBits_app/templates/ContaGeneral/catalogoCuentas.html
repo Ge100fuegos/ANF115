@@ -16,10 +16,67 @@
 </div>
 
 {% include 'catalogo/modals/_instrucciones.html' %}
+{% include 'catalogo/modals/_nueva_cuenta.html' %}
+{% include 'catalogo/modals/_importar_catalogo.html' %}
+{{ cuentas_js|json_script:"cuentas-data" }}
 {% endblock %}
 
 {% block footer_scripts %}
 {{ block.super }}
-<!-- aquí va el JS del catálogo si lo tienes, por ejemplo: -->
-<!-- <script src="{% static 'js/catalogo.js' %}"></script> -->
+<script>
+(function () {
+    const cuentas = JSON.parse(document.getElementById('cuentas-data').textContent);
+    const inputCodigo = document.getElementById('id_codigo');
+    const selectTipo = document.getElementById('id_tipo');
+    const info = document.getElementById('infoPadre');
+    const nivelPorLargo = {1: 'Grupo', 2: 'Subgrupo', 4: 'Cuenta'};
+
+    function buscarPadre(codigo) {
+        for (let i = codigo.length - 1; i > 0; i--) {
+            const c = codigo.slice(0, i);
+            if (cuentas[c]) return { codigo: c, ...cuentas[c] };
+        }
+        return null;
+    }
+
+    function mostrar(texto, clase) {
+        info.className = 'small mt-1 ' + clase;
+        info.textContent = texto;
+    }
+
+    function actualizar() {
+        inputCodigo.value = inputCodigo.value.replace(/\D/g, '');
+        const codigo = inputCodigo.value;
+        selectTipo.disabled = false;
+
+        if (!codigo) return mostrar('', '');
+        if (cuentas[codigo]) return mostrar('Este código ya existe en el catálogo.', 'text-danger');
+
+        const nivel = nivelPorLargo[codigo.length] || 'Subcuenta';
+        if (codigo.length === 1) return mostrar('Nivel: Grupo. Selecciona el tipo de cuenta.', 'text-muted');
+
+        const padre = buscarPadre(codigo);
+        if (!padre) return mostrar('No existe una cuenta padre para este código.', 'text-danger');
+        if (!padre.activa) return mostrar(`La cuenta padre ${padre.codigo} está inactiva.`, 'text-danger');
+
+        selectTipo.value = padre.tipo;
+        selectTipo.disabled = true;   // el servidor asigna el tipo del padre
+        mostrar(`Nivel: ${nivel} · Cuenta padre: ${padre.codigo} - ${padre.nombre}`, 'text-muted');
+    }
+
+    inputCodigo.addEventListener('input', actualizar);
+    actualizar();
+
+        const modalCuenta = document.getElementById('nuevaCuentaModal');
+    if (modalCuenta.dataset.abrir === '1') {
+        new bootstrap.Modal(modalCuenta).show();
+    }
+
+        document.getElementById('formImportarCatalogo').addEventListener('submit', function () {
+        const btn = document.getElementById('btnImportar');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importando...';
+    });
+})();
+</script>
 {% endblock %}

@@ -8,6 +8,14 @@ import json
 from ChivoBits_app.models.contaGeneral import *
 from decimal import Decimal
 
+from django.views.decorators.http import require_POST
+from ChivoBits_app.forms import CuentaForm
+
+from django.http import HttpResponse
+from django.views.decorators.http import require_POST
+from ChivoBits_app.forms import CuentaForm, ImportarCatalogoForm
+from ChivoBits_app.importar_catalogo import guardar_catalogo, generar_plantilla
+
 
 def libro(request):
     return render(request, 'ContaGeneral/libroMayor.html')
@@ -16,28 +24,79 @@ def menu_conta(request):
     return render(request, 'ContaGeneral/menu.html')
 
 
-def catalogo_cuentas(request):
-    # Obtener todas las cuentas ordenadas por código
+def _contexto_catalogo(form=None):
     cuentas = Cuenta.objects.all().order_by('codigo')
 
-    # Calcular estadísticas
-    total_cuentas = Cuenta.objects.filter(nivel__in=[3, 4]).count()
-    cuentas_activo = cuentas.filter(tipo='ACTIVO').count()
-    cuentas_pasivo = cuentas.filter(tipo='PASIVO').count()
-    cuentas_patrimonio = cuentas.filter(tipo='PATRIMONIO').count()
-    cuentas_ingreso = cuentas.filter(tipo='INGRESO').count()
-    cuentas_gasto = cuentas.filter(tipo='GASTO').count()
-
-    context = {
+    return {
         'cuentas': cuentas,
-        'total_cuentas': total_cuentas,
-        'cuentas_activo': cuentas_activo,
-        'cuentas_pasivo': cuentas_pasivo,
-        'cuentas_patrimonio': cuentas_patrimonio,
-        'cuentas_ingreso': cuentas_ingreso,
-        'cuentas_gasto': cuentas_gasto
+        'total_cuentas': Cuenta.objects.filter(nivel__in=[3, 4]).count(),
+        'cuentas_activo': cuentas.filter(tipo='ACTIVO').count(),
+        'cuentas_pasivo': cuentas.filter(tipo='PASIVO').count(),
+        'cuentas_patrimonio': cuentas.filter(tipo='PATRIMONIO').count(),
+        'cuentas_ingreso': cuentas.filter(tipo='INGRESO').count(),
+        'cuentas_gasto': cuentas.filter(tipo='GASTO').count(),
+        'form': form or CuentaForm(),
+        'form_importar': ImportarCatalogoForm(),
+        # Para que el modal muestre la cuenta padre mientras se escribe el código
+        'cuentas_js': {
+            c.codigo: {'nombre': c.nombre, 'tipo': c.tipo, 'activa': c.activa}
+            for c in cuentas
+        },
     }
+
+
+def catalogo_cuentas(request):
+    return render(request, 'ContaGeneral/catalogoCuentas.html', _contexto_catalogo())
+
+
+@require_POST
+def crear_cuenta(request):
+    form = CuentaForm(request.POST)
+    if form.is_valid():
+        cuenta = form.save()
+        messages.success(request, f'Cuenta {cuenta} agregada al catálogo.')
+        return redirect('catalogoCuentas')
+
+    # Hay errores: se vuelve a mostrar la pantalla con el modal abierto
+    context = _contexto_catalogo(form)
+    context['abrir_modal_cuenta'] = True
     return render(request, 'ContaGeneral/catalogoCuentas.html', context)
+
+@require_POST
+def catalogo_importar(request):
+    form = ImportarCatalogoForm(request.POST, request.FILES)
+    if not form.is_valid():
+        for error in form.errors.get('archivo', ['Selecciona un archivo.']):
+            messages.error(request, error)
+        return redirect('catalogoCuentas')
+
+    with transaction.atomic():
+        r = guardar_catalogo(form.filas, form.cleaned_data['actualizar_nombres'])
+
+    resumen = f"Importación terminada: {r['creadas']} cuentas creadas"
+    if r['actualizadas']:
+        resumen += f", {r['actualizadas']} actualizadas"
+    if r['omitidas']:
+        resumen += f", {r['omitidas']} ya existían"
+    messages.success(request, resumen + ".")
+
+    errores = form.errores_lectura + r['errores']
+    if errores:
+        texto = " · ".join(errores[:8])
+        if len(errores) > 8:
+            texto += f" … y {len(errores) - 8} más."
+        messages.warning(request, f"{len(errores)} filas no se importaron: {texto}")
+
+    return redirect('catalogoCuentas')
+
+
+def catalogo_plantilla(request):
+    respuesta = HttpResponse(
+        generar_plantilla(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    respuesta["Content-Disposition"] = 'attachment; filename="plantilla_catalogo_cuentas.xlsx"'
+    return respuesta
 
 def libro_mayor(request):
     # Obtener periodo activo

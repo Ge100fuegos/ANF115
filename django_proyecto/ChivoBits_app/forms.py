@@ -11,6 +11,10 @@ import re
 from ChivoBits_app.analisis_vh import leer_estado_excel, leer_texto_pegado
 from ChivoBits_app.models import LineaEstado
 
+from .models import Cuenta
+
+from ChivoBits_app.importar_catalogo import leer_catalogo
+
 
 class SerieBaseForm(forms.ModelForm):
     class Meta:
@@ -192,3 +196,90 @@ class CargarEstadoForm(forms.Form):
         except ValueError as e:
             raise forms.ValidationError(str(e))
         return c
+
+
+class CuentaForm(forms.ModelForm):
+    class Meta:
+        model = Cuenta
+        fields = ["codigo", "nombre", "tipo", "activa"]
+        labels = {"codigo": "Código", "nombre": "Nombre de la cuenta", "tipo": "Tipo", "activa": "Cuenta activa"}
+        widgets = {
+            "codigo": forms.TextInput(attrs={
+                "class": "form-control font-monospace", "placeholder": "Ej. 11010305",
+                "inputmode": "numeric", "maxlength": 10, "autocomplete": "off",
+            }),
+            "nombre": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej. BANCO CUSCATLAN CUENTA CORRIENTE"}),
+            "tipo": forms.Select(attrs={"class": "form-select"}),
+            "activa": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.padre = None
+        self.fields["tipo"].required = False
+        self.fields["activa"].initial = True
+
+    def clean_codigo(self):
+        codigo = self.cleaned_data["codigo"].strip()
+        if not codigo.isdigit():
+            raise forms.ValidationError("El código solo puede contener números.")
+        if Cuenta.objects.filter(codigo=codigo).exists():
+            raise forms.ValidationError(f"La cuenta {codigo} ya existe en el catálogo.")
+        return codigo
+
+    def clean_nombre(self):
+        return self.cleaned_data["nombre"].strip().upper()
+
+    def clean(self):
+        cleaned = super().clean()
+        codigo = cleaned.get("codigo")
+        if not codigo:
+            return cleaned
+
+        # La cuenta padre es el prefijo más largo que ya existe (110103 para 11010305)
+        for i in range(len(codigo) - 1, 0, -1):
+            self.padre = Cuenta.objects.filter(codigo=codigo[:i]).first()
+            if self.padre:
+                break
+
+        if len(codigo) > 1 and self.padre is None:
+            self.add_error("codigo", "No existe una cuenta padre para este código. Créala primero.")
+        elif self.padre and not self.padre.activa:
+            self.add_error("codigo", f"La cuenta padre {self.padre} está inactiva.")
+        elif self.padre:
+            cleaned["tipo"] = self.padre.tipo      # hereda el tipo del padre
+        elif not cleaned.get("tipo"):
+            self.add_error("tipo", "Selecciona el tipo para una cuenta de grupo.")
+        return cleaned
+
+    def save(self, commit=True):
+        cuenta = super().save(commit=False)
+        cuenta.cuenta_padre = self.padre
+        cuenta.tipo = self.cleaned_data["tipo"]
+        if commit:
+            cuenta.save()   # tu save() del modelo asigna el nivel
+        return cuenta
+
+
+class ImportarCatalogoForm(forms.Form):
+    archivo = forms.FileField(
+        label="Archivo de Excel (.xlsx)",
+        widget=forms.FileInput(attrs={"class": "form-control", "accept": ".xlsx"}),
+    )
+    actualizar_nombres = forms.BooleanField(
+        label="Actualizar el nombre de las cuentas que ya existen",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data["archivo"]
+        if not archivo.name.lower().endswith(".xlsx"):
+            raise forms.ValidationError("Solo se aceptan archivos .xlsx")
+        try:
+            self.filas, self.errores_lectura = leer_catalogo(archivo)
+        except ValueError as e:
+            raise forms.ValidationError(str(e))
+        except Exception:
+            raise forms.ValidationError("No se pudo leer el archivo. Verifica que sea un Excel válido.")
+        return archivo

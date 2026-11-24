@@ -1,0 +1,42 @@
+<div class="modal fade modal-minimal" id="importarCatalogoModal" tabindex="-1" aria-labelledby="importarCatalogoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="{% url 'catalogo_importar' %}" enctype="multipart/form-data"
+              class="modal-content" id="formImportarCatalogo">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="importarCatalogoLabel">Importar catálogo desde Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="seccion-titulo mb-2">Formato</p>
+                <ul class="small text-muted ps-3 mb-3">
+                    <li>Columnas <strong>Código</strong> y <strong>Nombre</strong> (también se aceptan "Cuenta Contable" y "Descripción").</li>
+                    <li>Cada cuenta se asigna a su cuenta padre según el código y hereda su tipo.</li>
+                    <li>Las cuentas de grupo (1 dígito) necesitan una columna <strong>Tipo</strong> o un nombre reconocible (Activo, Pasivo, Patrimonio, Ingresos, Gastos).</li>
+                    <li>Las cuentas que ya existen no se duplican.</li>
+                </ul>
+                <a href="{% url 'catalogo_plantilla' %}" class="btn btn-light btn-sm mb-3">
+                    <i class="bi bi-download me-1"></i>Descargar plantilla
+                </a>
+
+                <div class="mb-3">
+                    <label for="{{ form_importar.archivo.id_for_label }}" class="form-label small text-muted mb-1">{{ form_importar.archivo.label }}</label>
+                    {{ form_importar.archivo }}
+                </div>
+
+                <div class="form-check">
+                    {{ form_importar.actualizar_nombres }}
+                    <label for="{{ form_importar.actualizar_nombres.id_for_label }}" class="form-check-label small">{{ form_importar.actualizar_nombres.label }}</label>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primario" id="btnImportar">
+                    <i class="bi bi-upload me-1"></i>Importar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
